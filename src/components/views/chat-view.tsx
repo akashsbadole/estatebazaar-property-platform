@@ -33,9 +33,9 @@ interface ChatListItem {
     city: string
     images: Array<{ url: string; isPrimary: boolean }>
   }
-  buyer: { id: string; name: string; avatarUrl: string | null; isVerified: boolean }
-  seller: { id: string; name: string; avatarUrl: string | null; isVerified: boolean }
-  otherUser: { id: string; name: string; avatarUrl: string | null; isVerified: boolean }
+  buyer: { id: string; name: string; email: string; avatarUrl: string | null; isVerified: boolean }
+  seller: { id: string; name: string; email: string; avatarUrl: string | null; isVerified: boolean }
+  otherUser: { id: string; name: string; email: string; avatarUrl: string | null; isVerified: boolean }
   messages: Array<{ id: string; content: string; senderId: string; createdAt: string }>
   unreadCount: number
   updatedAt: string
@@ -44,7 +44,7 @@ interface ChatListItem {
 interface ChatDetail {
   chat: ChatListItem & {
     property: ChatListItem['property'] & { status: string }
-    otherUser: ChatListItem['otherUser'] & { joinedDate: string }
+    otherUser: ChatListItem['otherUser'] & { joinedDate: string; email: string }
   }
   messages: Array<{
     id: string
@@ -219,6 +219,9 @@ export function ChatView({ initialChatId }: Props) {
         chatId: activeChat,
         content,
         recipientId: detail.chat.otherUser.id,
+        recipientEmail: detail.chat.otherUser.email,
+        recipientName: detail.chat.otherUser.name,
+        propertyTitle: detail.chat.property.title,
         sender: { id: user.id, name: user.name, avatarUrl: user.avatarUrl || null },
       })
       socket?.emit('chat:stop-typing', { chatId: activeChat, recipientId: detail.chat.otherUser.id })

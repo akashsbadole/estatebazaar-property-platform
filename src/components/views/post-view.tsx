@@ -17,6 +17,7 @@ import {
   Loader2,
   Eye,
   Edit3,
+  Box,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -81,6 +82,7 @@ export function PostView({ editPropertyId }: PostViewProps) {
   const [loadingInitial, setLoadingInitial] = useState(isEditMode)
   const [previewOpen, setPreviewOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const tourFileInputRef = useRef<HTMLInputElement>(null)
 
   // Form state
   const [type, setType] = useState<string>('')
@@ -103,8 +105,11 @@ export function PostView({ editPropertyId }: PostViewProps) {
   const [contactPhone, setContactPhone] = useState(user?.phone || '')
   const [contactPref, setContactPref] = useState<string>('BOTH')
   const [images, setImages] = useState<UploadedImage[]>([])
+  const [tourImages, setTourImages] = useState<string[]>([])
   // Track original status so we can show the right messaging (e.g. re-approval needed)
   const [originalStatus, setOriginalStatus] = useState<string>('')
+
+  const isProOrBroker = user?.subscriptionTier === 'PRO' || user?.subscriptionTier === 'BROKER'
 
   // Load categories
   useEffect(() => {
@@ -145,6 +150,17 @@ export function PostView({ editPropertyId }: PostViewProps) {
             isPrimary: img.isPrimary,
           })),
         )
+        // Load tour images (stored as JSON string)
+        if (p.tourImages) {
+          try {
+            const parsed = JSON.parse(p.tourImages)
+            if (Array.isArray(parsed)) {
+              setTourImages(parsed.filter(s => typeof s === 'string'))
+            }
+          } catch {
+            // ignore parse error
+          }
+        }
         setOriginalStatus(p.status)
       })
       .catch(err => {
@@ -216,8 +232,43 @@ export function PostView({ editPropertyId }: PostViewProps) {
     })
   }
 
+  const removeTourImage = (idx: number) => {
+    setTourImages(prev => prev.filter((_, i) => i !== idx))
+  }
+
   const setPrimary = (idx: number) => {
     setImages(prev => prev.map((img, i) => ({ ...img, isPrimary: i === idx })))
+  }
+
+  const handleTourFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []).slice(0, 5 - tourImages.length)
+    if (files.length === 0) return
+
+    for (const file of files) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`${file.name} exceeds 10MB`)
+        continue
+      }
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} is not an image`)
+        continue
+      }
+      const reader = new FileReader()
+      reader.onload = async () => {
+        try {
+          const res = await apiPost<{ original: string; thumb: string; medium: string; large: string; url?: string }>('/api/upload', {
+            base64: reader.result as string,
+            filename: file.name,
+          })
+          const storedUrl = res.medium || res.url || res.original
+          setTourImages(prev => [...prev, storedUrl])
+        } catch (err: any) {
+          toast.error(`Upload failed: ${err.message}`)
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+    if (tourFileInputRef.current) tourFileInputRef.current.value = ''
   }
 
   const validateStep = (s: number): string | null => {
@@ -280,6 +331,7 @@ export function PostView({ editPropertyId }: PostViewProps) {
       contactPhone: contactPhone || undefined,
       contactPref,
       images: images.map(i => ({ url: i.url, isPrimary: i.isPrimary })),
+      tourImages: tourImages.length > 0 ? JSON.stringify(tourImages) : undefined,
     }
     try {
       if (isEditMode && editPropertyId) {
@@ -579,6 +631,71 @@ export function PostView({ editPropertyId }: PostViewProps) {
                 ))}
               </div>
             )}
+
+            {/* Tour Images (360°) - PRO/BROKER only */}
+            {isProOrBroker && (
+              <div className="pt-6 border-t">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">360° Virtual Tour Images</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Upload panoramic images for an immersive virtual tour. Up to 5 images, 10MB each.
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                    {user?.subscriptionTier} Feature
+                  </Badge>
+                </div>
+
+                <input
+                  ref={tourFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleTourFileSelect}
+                />
+
+                <button
+                  onClick={() => tourFileInputRef.current?.click()}
+                  disabled={tourImages.length >= 5}
+                  className="w-full border-2 border-dashed border-purple-200 dark:border-purple-800 rounded-lg p-6 flex flex-col items-center gap-2 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-colors disabled:opacity-50"
+                >
+                  <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                    <Box className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <span className="font-medium text-purple-700 dark:text-purple-300">Click to upload 360° tour images</span>
+                  <span className="text-xs text-muted-foreground">{tourImages.length}/5 uploaded</span>
+                </button>
+
+                {tourImages.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                    {tourImages.map((url, i) => (
+                      <div key={i} className="relative group aspect-square rounded-lg overflow-hidden border border-purple-200 dark:border-purple-800">
+                        <Image src={url} alt="" fill sizes="200px" className="object-cover" unoptimized />
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            size="icon"
+                            variant="secondary"
+                            className="h-8 w-8"
+                            onClick={() => removeTourImage(i)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <Badge className="absolute bottom-1 left-1 bg-purple-600 text-white">360°</Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!isProOrBroker && tourImages.length > 0 && (
+              <div className="pt-4 text-center text-amber-600 dark:text-amber-400">
+                <p className="text-sm">Tour images will be saved but not displayed until you upgrade to PRO or BROKER.</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -663,6 +780,9 @@ export function PostView({ editPropertyId }: PostViewProps) {
                 <ReviewItem icon={HomeIcon} label="Category" value={categories.find(c => c.id === categoryId)?.name || '-'} />
                 <ReviewItem icon={MapPin} label="Location" value={`${location}, ${city}, ${state_}`} />
                 <ReviewItem icon={ImageIcon} label="Photos" value={`${images.length} uploaded`} />
+                {tourImages.length > 0 && (
+                  <ReviewItem icon={Box} label="360° Tour Images" value={`${tourImages.length} uploaded`} />
+                )}
                 <ReviewItem icon={IndianRupee} label="Price" value={formatPrice(Number(price) || 0)} />
                 <ReviewItem icon={CheckCircle2} label="Negotiable" value={isNegotiable ? 'Yes' : 'No'} />
               </div>

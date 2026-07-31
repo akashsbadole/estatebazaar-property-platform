@@ -3,6 +3,8 @@ import { Server, Socket } from 'socket.io'
 import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'olx-property-platform-secret-2026-very-long'
+const API_BASE = process.env.API_BASE || 'http://localhost:3000'
+const INTERNAL_SECRET = process.env.INTERNAL_SERVICE_SECRET || 'dev-internal-secret'
 
 const httpServer = createServer()
 const io = new Server(httpServer, {
@@ -46,10 +48,39 @@ interface ClientMessage {
   chatId: string
   content: string
   recipientId: string
+  // Optional: for email notifications
+  recipientEmail?: string
+  recipientName?: string
+  propertyTitle?: string
   sender: {
     id: string
     name: string
     avatarUrl: string | null
+  }
+}
+
+async function sendChatNotification(payload: {
+  toEmail: string
+  toName: string
+  fromName: string
+  messagePreview: string
+  propertyTitle: string
+  chatId: string
+}) {
+  try {
+    const res = await fetch(`${API_BASE}/api/internal/chat/notify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-auth': INTERNAL_SECRET,
+      },
+      body: JSON.stringify(payload),
+    })
+    if (!res.ok) {
+      console.warn('[chat] Failed to send email notification:', await res.text())
+    }
+  } catch (err: any) {
+    console.error('[chat] Error sending notification:', err.message)
   }
 }
 
@@ -120,6 +151,25 @@ io.on('connection', (socket: Socket) => {
       fromName: user.name,
       preview: msg.content.slice(0, 80),
     })
+
+    // Send email notification to recipient if they're not currently in the chat
+    // and we have their email info
+    if (msg.recipientEmail && msg.recipientName && msg.propertyTitle) {
+      // Only send if recipient is not connected (simple heuristic: check if they have active sockets)
+      const recipientSockets = userSockets.get(msg.recipientId)
+      const isOnline = recipientSockets && recipientSockets.size > 0
+      
+      if (!isOnline) {
+        sendChatNotification({
+          toEmail: msg.recipientEmail,
+          toName: msg.recipientName,
+          fromName: user.name,
+          messagePreview: msg.content.slice(0, 100),
+          propertyTitle: msg.propertyTitle,
+          chatId: msg.chatId,
+        })
+      }
+    }
   })
 
   socket.on('chat:read', (payload: { chatId: string; recipientId: string }) => {

@@ -23,6 +23,7 @@ import {
   BadgeCheck,
   Phone,
   Download,
+  Settings,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -54,7 +55,7 @@ import { formatPrice, timeAgo, PROPERTY_STATUS, REPORT_REASONS, REPORT_STATUS } 
 import { toast } from 'sonner'
 import { AdminUserDetailDrawer } from '@/components/admin-user-detail-drawer'
 
-type Tab = 'dashboard' | 'listings' | 'users' | 'reports' | 'contacts' | 'audit-log'
+type Tab = 'dashboard' | 'listings' | 'users' | 'reports' | 'contacts' | 'audit-log' | 'settings'
 
 export function AdminView() {
   const { user, navigate } = useApp()
@@ -80,7 +81,7 @@ export function AdminView() {
       </div>
 
       <Tabs value={tab} onValueChange={v => setTab(v as Tab)}>
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-6 max-w-3xl mb-6">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-7 max-w-4xl mb-6">
           <TabsTrigger value="dashboard" className="gap-1">
             <LayoutDashboard className="h-4 w-4" /> Dashboard
           </TabsTrigger>
@@ -99,6 +100,9 @@ export function AdminView() {
           <TabsTrigger value="audit-log" className="gap-1">
             <Shield className="h-4 w-4" /> Audit Log
           </TabsTrigger>
+          <TabsTrigger value="settings" className="gap-1">
+            <Settings className="h-4 w-4" /> Settings
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard"><DashboardTab /></TabsContent>
@@ -107,6 +111,7 @@ export function AdminView() {
         <TabsContent value="reports"><ReportsTab /></TabsContent>
         <TabsContent value="contacts"><ContactsTab /></TabsContent>
         <TabsContent value="audit-log"><AuditLogTab /></TabsContent>
+        <TabsContent value="settings"><SettingsTab /></TabsContent>
       </Tabs>
     </div>
   )
@@ -1063,6 +1068,181 @@ function AuditLogTab() {
             ))}
           </div>
         </Card>
+      )}
+    </div>
+  )
+}
+
+// ---------- Settings ----------
+function SettingsTab() {
+  const [settings, setSettings] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [newKey, setNewKey] = useState('')
+  const [newValue, setNewValue] = useState('')
+  const [newCategory, setNewCategory] = useState('general')
+  const [newIsSecret, setNewIsSecret] = useState(false)
+
+  const categories = ['general', 'features', 'payments', 'limits', 'email', 'integrations']
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await apiGet<{ settings: any[] }>('/api/admin/settings')
+      setSettings(res.settings)
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to load settings')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const upsert = async () => {
+    if (!newKey.trim()) return toast.error('Key is required')
+    try {
+      await apiPost('/api/admin/settings', {
+        key: newKey.trim(),
+        value: newValue,
+        category: newCategory,
+        isSecret: newIsSecret,
+      })
+      toast.success('Setting saved')
+      setNewKey('')
+      setNewValue('')
+      setNewCategory('general')
+      setNewIsSecret(false)
+      await load()
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save setting')
+    }
+  }
+
+  const deleteSetting = async (key: string) => {
+    try {
+      await apiDelete(`/api/admin/settings?key=${encodeURIComponent(key)}`)
+      toast.success('Setting deleted')
+      await load()
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete')
+    }
+  }
+
+  const groupedSettings = settings.reduce((acc, s) => {
+    if (!acc[s.category]) acc[s.category] = []
+    acc[s.category].push(s)
+    return acc
+  }, {} as Record<string, typeof settings>)
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Site Settings</h2>
+        <Badge variant="secondary">Key-value store for site configuration</Badge>
+      </div>
+
+      {/* Add new setting */}
+      <Card className="p-4">
+        <h3 className="font-semibold mb-4">Add / Update Setting</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="space-y-2">
+            <Label>Key</Label>
+            <Input
+              placeholder="e.g. maintenance_mode, max_upload_size_mb"
+              value={newKey}
+              onChange={e => setNewKey(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Value</Label>
+            <Input
+              placeholder="e.g. true, 10, https://..."
+              value={newValue}
+              onChange={e => setNewValue(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Category</Label>
+            <Select value={newCategory} onValueChange={setNewCategory}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {categories.map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Secret?</Label>
+            <Switch checked={newIsSecret} onCheckedChange={setNewIsSecret} />
+            <p className="text-xs text-muted-foreground">Hide from public API</p>
+          </div>
+          <div className="flex items-end">
+            <Button onClick={upsert} className="w-full">Save</Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Settings list grouped by category */}
+      {loading ? (
+        <Card className="p-8 text-center">Loading...</Card>
+      ) : settings.length === 0 ? (
+        <Card className="p-8 text-center text-muted-foreground">No settings configured yet.</Card>
+      ) : (
+        <div className="space-y-6">
+          {Object.entries(groupedSettings).map(([category, items]) => (
+            <Card key={category} className="overflow-hidden">
+              <div className="px-4 py-3 bg-muted/50 border-b font-medium text-sm uppercase tracking-wider">
+                {category}
+              </div>
+              <div className="divide-y">
+                {items.map(setting => (
+                  <div key={setting.key} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <code className="font-mono text-sm bg-muted px-2 py-1 rounded">{setting.key}</code>
+                        {setting.isSecret && (
+                          <Badge variant="destructive" className="text-xs">Secret</Badge>
+                        )}
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-1 font-mono truncate max-w-xs sm:max-w-md">
+                        {setting.isSecret ? '••••••••' : setting.value}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Updated by {setting.updatedBy || '—'} at {new Date(setting.updatedAt).toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const newVal = prompt(`New value for ${setting.key}:`, setting.isSecret ? '' : setting.value)
+                          if (newVal !== null) {
+                            apiPost('/api/admin/settings', { key: setting.key, value: newVal, category: setting.category, isSecret: setting.isSecret })
+                              .then(() => { toast.success('Updated'); load() })
+                              .catch((e: any) => toast.error(e.message || 'Failed'))
+                          }
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          if (confirm(`Delete setting "${setting.key}"?`)) deleteSetting(setting.key)
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   )

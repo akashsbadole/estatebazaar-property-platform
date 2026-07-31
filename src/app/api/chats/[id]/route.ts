@@ -26,8 +26,8 @@ export async function GET(request: NextRequest, { params }: Params) {
           images: { select: { url: true, isPrimary: true }, take: 1 },
         },
       },
-      buyer: { select: { id: true, name: true, avatarUrl: true, isVerified: true, joinedDate: true } },
-      seller: { select: { id: true, name: true, avatarUrl: true, isVerified: true, joinedDate: true } },
+      buyer: { select: { id: true, name: true, email: true, avatarUrl: true, isVerified: true, joinedDate: true } },
+      seller: { select: { id: true, name: true, email: true, avatarUrl: true, isVerified: true, joinedDate: true } },
     },
   })
 
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   const otherUser = chat.buyerId === user.id ? chat.seller : chat.buyer
 
   return jsonResponse({
-    chat: { ...chat, otherUser },
+    chat: { ...chat, otherUser: { ...otherUser, email: otherUser.email } },
     messages: messages.reverse(),
   })
 }
