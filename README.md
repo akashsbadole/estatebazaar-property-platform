@@ -4,6 +4,17 @@ A full-stack peer-to-peer property marketplace inspired by OLX. Built with **Nex
 
 ![EstateBazaar](https://img.shields.io/badge/Next.js-16-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue) ![Prisma](https://img.shields.io/badge/Prisma-6-indigo) ![Tailwind](https://img.shields.io/badge/Tailwind-4-cyan)
 
+----
+## Credential
+----
+| Email | Role | Subscription | Password |
+|-------|------|--------------|----------|
+| admin@estatebazaar.com | ADMIN | FREE | password123 |
+| user@estatebazaar.com | USER | FREE | password123 |
+| pro@estatebazaar.com | USER | PRO | password123 |
+| broker@estatebazaar.com | USER | BROKER | password123 |
+| vendor@estatebazaar.com | USER | FREE | password123 |
+
 ---
 
 ## 📦 Project Structure
@@ -11,12 +22,12 @@ A full-stack peer-to-peer property marketplace inspired by OLX. Built with **Nex
 ```
 .
 ├── prisma/
-│   └── schema.prisma                # Database schema (9 models)
+│   ├── schema.prisma                # Database schema (12+ models)
+│   ├── migrations/                  # Migration history
+│   └── seed.ts                      # Database seed (users, categories, plans, 6 listings)
 ├── public/
 │   ├── uploads/                     # User-uploaded property images
 │   └── placeholder-property.svg
-├── scripts/
-│   └── seed.ts                      # Database seed (admin, demo users, categories, 8 listings)
 ├── mini-services/
 │   └── chat-service/                # Socket.io WebSocket service (port 3003)
 │       ├── index.ts
@@ -69,12 +80,14 @@ A full-stack peer-to-peer property marketplace inspired by OLX. Built with **Nex
 ## 🚀 Features Implemented
 
 ### 🔐 Authentication & Security
-- **Email/Password signup** with bcrypt password hashing (10 rounds)
+- **Email/Password signup** with bcrypt password hashing (12 rounds)
 - **OTP verification** (6-digit code, 10-min expiry, demo preview shown in toast)
 - **JWT session tokens** stored in httpOnly cookies (7-day expiry)
 - **Login/Logout** with session invalidation
 - **Rate limiting** (in-memory, per-IP): signup 5/min, login 10/min, OTP 5/min
 - **Role-based access control**: USER vs ADMIN
+- **Subscription tiers**: FREE | PRO | BROKER (stored on User)
+- **Brokerage signup fee** tracking (`brokeragePaid`)
 - **Input sanitization** (strips angle brackets, enforces max length)
 - **Audit logging** of all sensitive actions (signup, login, listing create/update/delete, favorite, report, admin moderation)
 - **Account banning** — banned users cannot log in
@@ -87,9 +100,28 @@ A full-stack peer-to-peer property marketplace inspired by OLX. Built with **Nex
 - **Delete** listing (cascade removes images, chats, messages, favorites, reports)
 - **My Listings** page — owner can view all their listings across statuses
 - **Featured** endpoint — latest + most-viewed + cities list for homepage
+- **Recommended** endpoint — personalized or trending fallback
 - **Filtering**: by keyword, type, category, city, price range, bedrooms, furnishing
 - **Sorting**: latest, price asc/desc, most viewed
 - **Pagination**: 12 per page, "Load more" pattern
+- **Property types**: FLAT | HOUSE | PLOT | COMMERCIAL | VILLA | BUILDER_FLOOR
+- **Furnishing**: FURNISHED | SEMI_FURNISHED | UNFURNISHED
+- **Contact preferences**: CALL | CHAT | BOTH
+- **Verified Listing badge** — premium feature for PRO/BROKER subscribers
+- **360° Tour images** — JSON array of panoramic image URLs (PRO/BROKER)
+- **Price history tracking** — automatic on price changes
+
+### 📂 Categories
+- 4 built-in categories: Residential, Commercial, Land, Rental
+- Each with icon and slug for routing
+- Property count aggregation
+
+### 💳 Subscription System
+- **Plans**: FREE (₹0), PRO (₹999/mo, ₹9,999/yr), BROKER (₹2,999/mo, ₹29,999/yr)
+- Feature flags stored as JSON: maxListings, maxImagesPerListing, featuredListing, verifiedBadge, analytics, prioritySupport, teamAccess, crmIntegration
+- Billing cycle: MONTHLY | YEARLY
+- Subscription status: ACTIVE | EXPIRED | CANCELLED | PENDING
+- Payment tracking with Razorpay/UPI/DEMO methods
 
 ### 🎨 UI/UX (8 distinct views)
 1. **Home** — Hero with search bar, category tiles, latest + trending sections, why-choose-us, CTA
@@ -127,22 +159,54 @@ A full-stack peer-to-peer property marketplace inspired by OLX. Built with **Nex
 - 5 MB size limit per file
 - Returns public URL for embedding
 
+### 💾 Additional Features
+- **Favorites** — Bookmark listings with unique constraint per user+property
+- **Reports** — Fraud/Duplicate/Spam/Wrong Info/Other with status workflow
+- **Contact Requests** — Enquiry (property) or Support (general) with admin notes
+- **Recently Viewed** — Per-user viewing history with timestamps
+- **Saved Searches** — Save filter sets with optional email alerts
+- **Mortgage Applications** — Pre-approval forms with partner bank integration
+- **Site Settings** — Key-value store with categories and secrets
+- **Banners** — Homepage promotional banners
+- **Blog Posts** — Content management with slugs
+- **Content Pages** — Static pages (About, Terms, Privacy, etc.)
+- **Redirects** — URL redirect management
+- **Newsletter Subscribers** — Email capture
+- **Notifications** — User notifications with read status
+- **Password Reset Tokens** — Secure reset flow
+
 ---
 
-## 🗄️ Database Models (9)
+## 🗄️ Database Models (18+)
 
 | Model | Purpose |
 |---|---|
-| `User` | Account (USER/ADMIN), name, email, phone, passwordHash, isVerified, isBanned, avatarUrl |
-| `Category` | Listing categories (Flats, Houses, Villas, Plots, Builder Floors, Commercial) |
-| `Property` | Listings with type, price, area, beds/baths/parking, location, lat/lng, status, contact info |
-| `PropertyImage` | Multiple images per property, one isPrimary |
-| `Chat` | Conversation thread between buyer & seller about a specific property |
-| `Message` | Individual chat messages with isRead tracking |
-| `Report` | User-submitted fraud/duplicate/spam reports with status workflow |
-| `Favorite` | User bookmarks (unique constraint per user+property) |
-| `Otp` | One-time passwords with expiry and consumed flag |
-| `AuditLog` | Append-only audit trail of all sensitive actions |
+| `User` | Account (USER/ADMIN), subscription tier, brokerage, verification, ban status |
+| `Category` | Listing categories with icons and slugs |
+| `Property` | Full listing details, pricing, location, status, contact, tour images |
+| `PropertyImage` | Multiple images per property, one primary |
+| `Chat` | Conversation thread between buyer & seller |
+| `Message` | Individual chat messages with read tracking |
+| `Report` | User-submitted reports with status workflow |
+| `Favorite` | User bookmarks (unique per user+property) |
+| `Otp` | One-time passwords with expiry/consumed flag |
+| `AuditLog` | Append-only audit trail |
+| `SubscriptionPlan` | Plan definitions with feature flags (JSON) |
+| `Subscription` | User subscriptions with billing cycle & status |
+| `Payment` | Payment records (Razorpay/UPI/DEMO) |
+| `ContactRequest` | Enquiries & support tickets |
+| `RecentlyViewed` | Per-user property view history |
+| `SavedSearch` | Saved filter sets with alert settings |
+| `MortgageApplication` | Pre-approval applications |
+| `SiteSetting` | Key-value site configuration |
+| `PriceHistory` | Property price change tracking |
+| `Banner` | Homepage promotional banners |
+| `BlogPost` | Content management |
+| `ContentPage` | Static pages |
+| `Redirect` | URL redirects |
+| `NewsletterSubscriber` | Email list |
+| `Notification` | User notifications |
+| `PasswordResetToken` | Password reset flow |
 
 ---
 
@@ -158,6 +222,8 @@ A full-stack peer-to-peer property marketplace inspired by OLX. Built with **Nex
 - **Realtime**: Socket.io (separate mini-service on port 3003)
 - **Icons**: Lucide React
 - **Toasts**: Sonner
+- **Date**: date-fns
+- **Charts**: Recharts (admin dashboard)
 
 ---
 
@@ -165,31 +231,31 @@ A full-stack peer-to-peer property marketplace inspired by OLX. Built with **Nex
 
 ```bash
 # Install dependencies
-bun install
+npm install
 
-# Initialize database
-bun run db:push
+# Initialize database (run migrations)
+npm run db:migrate
 
 # Seed sample data
-bun run scripts/seed.ts
+npm run db:seed
 
 # Start chat WebSocket service (separate terminal)
 cd mini-services/chat-service
-bun install
-bun run dev   # runs on port 3003
+npm install
+npm run dev   # runs on port 3003
 
 # Start Next.js dev server (separate terminal)
-bun run dev   # runs on port 3000
+npm run dev   # runs on port 3000
 ```
 
 Open `http://localhost:3000`.
 
 ### Demo Credentials
-- **Admin**: `admin@olx-property.com` / `admin123`
-- **User 1**: `rahul@example.com` / `demo1234` (owns 2 listings)
-- **User 2**: `priya@example.com` / `demo1234`
-- **User 3**: `amit@example.com` / `demo1234`
-- **User 4**: `sneha@example.com` / `demo1234`
+- **Admin**: `admin@estatebazaar.com` / `password123`
+- **Regular User**: `user@estatebazaar.com` / `password123` (FREE tier)
+- **Pro User**: `pro@estatebazaar.com` / `password123` (PRO tier)
+- **Broker**: `broker@estatebazaar.com` / `password123` (BROKER tier)
+- **Vendor**: `vendor@estatebazaar.com` / `password123` (FREE tier)
 
 > **Note on OTP**: OTPs are generated and validated server-side. In this demo, the OTP is also returned in the API response and shown via a Sonner toast so you can complete the flow without real email/SMS. In production, remove `otpPreview` from API responses and integrate an actual email/SMS provider.
 
@@ -213,6 +279,7 @@ Open `http://localhost:3000`.
 | GET | `/api/properties` | List with filters/sort/pagination |
 | POST | `/api/properties` | Create listing (auth required) |
 | GET | `/api/properties/featured` | Homepage curated set |
+| GET | `/api/properties/recommended` | Personalized or trending |
 | GET | `/api/properties/my` | Owner's listings (auth required) |
 | GET | `/api/properties/[id]` | Get single + similar |
 | PUT | `/api/properties/[id]` | Update (owner only) |
@@ -253,7 +320,7 @@ Open `http://localhost:3000`.
 
 ## 🔒 Security Notes
 
-1. **Passwords** — bcrypt-hashed with 10 rounds, never logged or returned
+1. **Passwords** — bcrypt-hashed with 12 rounds, never logged or returned
 2. **Sessions** — JWT in httpOnly, SameSite=Lax cookies (7-day expiry)
 3. **SQL Injection** — All queries go through Prisma ORM (parameterized)
 4. **XSS** — User input sanitized (strips `<`/`>`), no `dangerouslySetInnerHTML` for user data
