@@ -8,8 +8,8 @@ const CHECK_INTERVAL_MS = 5 * 60 * 1000 // 5 minutes
 const API_BASE = process.env.API_BASE || 'http://localhost:3000'
 
 // Admin credentials for the alert-check endpoint (which is admin-only)
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@olx-property.com'
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@estatebazaar.com'
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'password123'
 
 let sessionCookie: string | null = null
 

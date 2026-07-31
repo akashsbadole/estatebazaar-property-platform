@@ -155,7 +155,7 @@ export function PostView({ editPropertyId }: PostViewProps) {
   }, [editPropertyId, user, navigate])
 
   const detectLocation = () => {
-    if (!navigator.geography) {
+    if (!navigator.geolocation) {
       toast.error('Geolocation not supported')
       return
     }

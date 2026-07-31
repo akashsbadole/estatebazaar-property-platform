@@ -103,58 +103,65 @@ export function ChatView({ initialChatId }: Props) {
     loadChats()
   }, [loadChats])
 
-  // Setup WebSocket
+// Setup WebSocket
   useEffect(() => {
     if (!user) return
-    // Read JWT from cookie via fetch on /api/auth/me — or just hit it for side-effect.
-    // Actually, we need to send the JWT in the socket handshake. Read cookie via document.cookie (httpOnly cookie is not visible to JS, so we'll instead fetch a one-time ws token... but to keep this simple, we'll re-use the http-only cookie by hitting /api/auth/me and then making a lightweight token endpoint.)
-    // Simpler: use a dedicated /api/auth/ws-token endpoint. To avoid adding more routes, we'll skip JWT in WS and trust the user identity from /api/chats responses.
-    // For real-time delivery, the WS will broadcast by chatId and we filter on the client side.
 
-    const s = io('/?XTransformPort=' + WS_PORT, {
-      path: '/',
-      transports: ['websocket', 'polling'],
-      auth: async (cb: any) => {
-        // Get a short-lived token by hitting the /api/auth/me endpoint and using session cookie.
-        // Since cookie is httpOnly, we'll just pass a placeholder and let the server treat all sockets as anonymous. The server will broadcast to chat rooms; client filters messages by senderId vs user.id.
-        cb({ token: 'anonymous' })
-      },
-    })
+    let mounted = true
 
-    s.on('connect', () => {
-      console.log('[chat] connected', s.id)
-    })
-    s.on('connect_error', (err: any) => {
-      console.warn('[chat] connect error', err.message)
-    })
+    const setupSocket = async () => {
+      // Fetch short-lived WS token
+      let wsToken: string | null = null
+      try {
+        const res = await apiGet<{ token: string }>('/api/auth/ws-token')
+        wsToken = res.token
+      } catch {
+        toast.error('Failed to authenticate WebSocket')
+        return
+      }
+      if (!mounted) return
 
-    s.on('chat:message', (msg: any) => {
-      // Only handle messages for the currently active chat
-      if (msg.chatId !== activeChat) return
-      setDetail(prev => {
-        if (!prev) return prev
-        // Avoid duplicating optimistic messages
-        if (prev.messages.some(m => m.id === msg.id)) return prev
-        return { ...prev, messages: [...prev.messages, { ...msg, isRead: false }] }
+      const s = io('/?XTransformPort=' + WS_PORT, {
+        path: '/',
+        transports: ['websocket', 'polling'],
+        auth: { token: wsToken },
       })
-      // Auto-scroll
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
-    })
 
-    s.on('chat:typing', (payload: { chatId: string; userId: string }) => {
-      if (payload.chatId === activeChat && payload.userId !== user.id) {
-        setOtherTyping(true)
-      }
-    })
-    s.on('chat:stop-typing', (payload: { chatId: string; userId: string }) => {
-      if (payload.chatId === activeChat && payload.userId !== user.id) {
-        setOtherTyping(false)
-      }
-    })
+      s.on('connect', () => {
+        console.log('[chat] connected', s.id)
+      })
+      s.on('connect_error', (err: any) => {
+        console.warn('[chat] connect error', err.message)
+      })
 
-    setSocket(s)
+      s.on('chat:message', (msg: any) => {
+        if (msg.chatId !== activeChat) return
+        setDetail(prev => {
+          if (!prev) return prev
+          if (prev.messages.some(m => m.id === msg.id)) return prev
+          return { ...prev, messages: [...prev.messages, { ...msg, isRead: false }] }
+        })
+        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+      })
+
+      s.on('chat:typing', (payload: { chatId: string; userId: string }) => {
+        if (payload.chatId === activeChat && payload.userId !== user.id) {
+          setOtherTyping(true)
+        }
+      })
+      s.on('chat:stop-typing', (payload: { chatId: string; userId: string }) => {
+        if (payload.chatId === activeChat && payload.userId !== user.id) {
+          setOtherTyping(false)
+        }
+      })
+
+      setSocket(s)
+    }
+
+    setupSocket()
     return () => {
-      s.disconnect()
+      mounted = false
+      socket?.disconnect()
     }
   }, [user, activeChat])
 
