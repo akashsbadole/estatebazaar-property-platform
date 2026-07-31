@@ -1,0 +1,428 @@
+// OLX-style Property Selling Platform — Prisma schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?  @unique
+  passwordHash String
+  role         String   @default("USER") // USER | ADMIN
+  // Subscription tier: FREE | PRO | BROKER
+  subscriptionTier String @default("FREE")
+  // One-time brokerage signup fee paid?
+  brokeragePaid Boolean @default(false)
+  // Receive email notifications for new chats, saved-search alerts, etc.
+  emailNotifications Boolean @default(true)
+  isVerified   Boolean  @default(false)
+  isBanned     Boolean  @default(false)
+  avatarUrl    String?
+  joinedDate   DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  properties  Property[]
+  favorites   Favorite[]
+  chatsBuyer  Chat[]     @relation("ChatBuyer")
+  chatsSeller Chat[]     @relation("ChatSeller")
+  messages    Message[]
+  reports     Report[]   @relation("ReportReporter")
+  otps        Otp[]
+  subscriptions Subscription[]
+  payments    Payment[]
+  contactRequests ContactRequest[]
+  recentlyViewed RecentlyViewed[]
+  savedSearches  SavedSearch[]
+  mortgageApplications MortgageApplication[]
+}
+
+model Category {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  slug      String     @unique
+  icon      String?
+  createdAt DateTime   @default(now())
+  properties Property[]
+}
+
+model Property {
+  id           String   @id @default(cuid())
+  ownerId      String
+  categoryId   String
+  title        String
+  description  String
+  type         String   // FLAT | HOUSE | PLOT | COMMERCIAL | VILLA | BUILDER_FLOOR
+  price        Int
+  isNegotiable Boolean  @default(false)
+  area         Int      // in sq ft
+  furnishing   String   @default("UNFURNISHED") // FURNISHED | SEMI_FURNISHED | UNFURNISHED
+  bedrooms     Int      @default(0)
+  bathrooms    Int      @default(0)
+  parking      Int      @default(0)
+  location     String
+  city         String
+  state        String
+  pincode      String?
+  latitude     Float?
+  longitude    Float?
+  status       String   @default("PENDING") // PENDING | APPROVED | REJECTED | SOLD
+  // Premium "Verified Listing" badge — granted to PRO/BROKER subscribers by admin
+  isVerifiedListing Boolean @default(false)
+  // JSON array of panoramic (360°) image URLs — premium feature for PRO/BROKER subscribers
+  tourImages   String?
+  contactPhone String?
+  contactPref  String   @default("BOTH") // CALL | CHAT | BOTH
+  viewCount    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  owner      User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  category   Category       @relation(fields: [categoryId], references: [id])
+  images     PropertyImage[]
+  chats      Chat[]
+  reports    Report[]
+  favorites  Favorite[]
+  contactRequests ContactRequest[]
+  recentlyViewed RecentlyViewed[]
+  mortgageApplications MortgageApplication[]
+  priceHistory PriceHistory[]
+
+  @@index([ownerId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([city])
+}
+
+model PropertyImage {
+  id         String   @id @default(cuid())
+  propertyId String
+  url        String
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+}
+
+model Chat {
+  id         String   @id @default(cuid())
+  propertyId String
+  buyerId    String
+  sellerId   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  buyer    User     @relation("ChatBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller   User     @relation("ChatSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@unique([propertyId, buyerId])
+  @@index([buyerId])
+  @@index([sellerId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  chatId    String
+  senderId  String
+  content   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  chat   Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([chatId])
+  @@index([senderId])
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  propertyId  String
+  reporterId  String
+  reason      String   // FRAUD | DUPLICATE | SPAM | WRONG_INFO | OTHER
+  description String?
+  status      String   @default("OPEN") // OPEN | REVIEWING | RESOLVED | DISMISSED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  reporter User     @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([status])
+}
+
+model Favorite {
+  id         String   @id @default(cuid())
+  userId     String
+  propertyId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, propertyId])
+  @@index([userId])
+}
+
+model Otp {
+  id         String   @id @default(cuid())
+  identifier String   // email or phone
+  code       String
+  purpose    String   // SIGNUP | LOGIN | RESET
+  expiresAt  DateTime
+  consumed   Boolean  @default(false)
+  userId     String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([identifier])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  target    String?
+  meta      String?
+  ip        String?
+  createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Subscription system
+// ---------------------------------------------------------------------------
+
+model SubscriptionPlan {
+  id          String   @id @default(cuid())
+  code        String   @unique // FREE | PRO | BROKER
+  name        String
+  tagline     String?
+  // Prices in paise (₹1 = 100 paise) — 0 for FREE
+  priceMonthly  Int    @default(0)
+  priceYearly   Int    @default(0)
+  // Feature flags stored as JSON string (limits: maxListings, maxImagesPerListing, etc.)
+  features    String   // JSON
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  userId    String
+  planId    String
+  // Snapshot of plan code at time of subscription
+  planCode  String
+  // MONTHLY | YEARLY
+  billingCycle String
+  amount    Int      // in paise, actually charged
+  // ACTIVE | EXPIRED | CANCELLED | PENDING
+  status    String   @default("PENDING")
+  startsAt  DateTime?
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      SubscriptionPlan @relation(fields: [planId], references: [id])
+  payments  Payment[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  userId          String
+  subscriptionId  String?
+  // SUBSCRIPTION | BROKERAGE_SIGNUP
+  type            String
+  // RAZORPAY | UPI | DEMO
+  method          String
+  amount          Int      // in paise
+  currency        String   @default("INR")
+  // Razorpay order id (server-generated)
+  providerOrderId String?
+  // Razorpay payment id (returned on success)
+  providerPaymentId String?
+  // Razorpay signature (for verification)
+  providerSignature String?
+  // UPI transaction reference (for UPI flow)
+  upiRef          String?
+  // CREATED | PAID | FAILED | REFUNDED
+  status          String   @default("CREATED")
+  meta            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription  Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([providerOrderId])
+}
+
+// ---------------------------------------------------------------------------
+// Contact requests — "Contact Us" form, plus buyer enquiries that go to the
+// admin/team who then connect the buyer with the homeowner.
+// ---------------------------------------------------------------------------
+
+model ContactRequest {
+  id         String   @id @default(cuid())
+  // ENQUIRY (buyer interested in a property) | SUPPORT (general contact)
+  type       String   @default("ENQUIRY")
+  name       String
+  email      String
+  phone      String?
+  message    String
+  // For ENQUIRY type — the property the user is asking about
+  propertyId String?
+  // NEW | CONTACTED | RESOLVED | ARCHIVED
+  status     String   @default("NEW")
+  // Admin notes — internal, not shown to the requester
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  property   Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  userId     String?
+
+  @@index([status])
+  @@index([type])
+  @@index([propertyId])
+}
+
+// ---------------------------------------------------------------------------
+// Recently Viewed Properties — track per-user viewing history
+// ---------------------------------------------------------------------------
+
+model RecentlyViewed {
+  id         String   @id @default(cuid())
+  userId     String
+  propertyId String
+  viewedAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property  Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, propertyId])
+  @@index([userId, viewedAt])
+}
+
+// ---------------------------------------------------------------------------
+// Saved Searches — users can save a filter set and get alerts when new
+// properties match (alert delivery is a separate cron-style job).
+// ---------------------------------------------------------------------------
+
+model SavedSearch {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  // JSON of filter object: { q, type, city, categoryId, minPrice, maxPrice, ... }
+  filters     String
+  // Optional email alert (true = notify when new matches appear)
+  alertEnabled Boolean @default(false)
+  // Last time we checked for new matches (for alerts)
+  lastCheckedAt DateTime?
+  // Count of new matches since last view (for in-app badge)
+  newMatchCount Int    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([alertEnabled])
+}
+
+// ---------------------------------------------------------------------------
+// Mortgage Pre-Approval Applications — buyers submit a form, partner banks
+// review and respond with pre-approval offers.
+// ---------------------------------------------------------------------------
+
+model MortgageApplication {
+  id              String   @id @default(cuid())
+  userId          String
+  propertyId      String?
+  // Salaried | Self-Employed | Business | Retired
+  employmentType  String
+  monthlyIncome   Int      // in rupees
+  loanAmount      Int      // requested loan amount in rupees
+  tenureYears     Int      // requested tenure
+  employerName    String?
+  // 300-900 (CIBIL-style)
+  creditScore     Int?
+  // Existing EMIs per month
+  existingEMIs    Int      @default(0)
+  // Optional message from applicant
+  notes           String?
+  // PENDING | UNDER_REVIEW | PRE_APPROVED | REJECTED | DISBURSED
+  status          String   @default("PENDING")
+  // Partner bank that processed the application
+  partnerBank     String?
+  // Approved loan amount (may differ from requested)
+  approvedAmount  Int?
+  // Interest rate offered
+  interestRate    Float?
+  // Bank's response notes
+  bankNotes       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([propertyId])
+}
+
+// ---------------------------------------------------------------------------
+// Site-wide settings (key-value store)
+// ---------------------------------------------------------------------------
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  category  String   @default("general") // general | features | payments | limits
+  isSecret  Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+}
+
+// ---------------------------------------------------------------------------
+// Price History — tracks actual price changes per property over time
+// ---------------------------------------------------------------------------
+
+model PriceHistory {
+  id          String   @id @default(cuid())
+  propertyId  String
+  oldPrice    Int
+  newPrice    Int
+  changedAt   DateTime @default(now())
+
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([changedAt])
+}

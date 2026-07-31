@@ -1,0 +1,50 @@
+{
+  "name": "EstateBazaar — Property Marketplace",
+  "short_name": "EstateBazaar",
+  "description": "Buy, sell and rent properties across India. Post free listings, chat with sellers, and find your dream home.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0e7490",
+  "orientation": "portrait-primary",
+  "categories": ["business", "lifestyle", "shopping"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Post Property",
+      "short_name": "Post",
+      "description": "Post a new property listing",
+      "url": "/?action=post",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Search Properties",
+      "short_name": "Search",
+      "description": "Browse property listings",
+      "url": "/?action=listings",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Chats",
+      "short_name": "Chats",
+      "description": "View your conversations",
+      "url": "/?action=chats",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
