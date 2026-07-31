@@ -80,6 +80,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
       take: 10,
       select: {
         id: true, createdAt: true, updatedAt: true,
+        buyerId: true,
         property: { select: { id: true, title: true, price: true } },
         buyer: { select: { id: true, name: true } },
         seller: { select: { id: true, name: true } },
@@ -123,7 +124,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
     recentListings,
     recentChats: recentChats.map(c => ({
       ...c,
-      otherUser: c.buyerId === id ? c.seller : c.buyer,
+      otherUser: c.buyer.id === id ? c.seller : c.buyer,
     })),
     recentPayments: recentPayments.map(p => ({
       ...p,

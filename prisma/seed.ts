@@ -148,6 +148,7 @@ async function main() {
       ownerId: regularUser.id,
       categoryId: categories.residential.id,
       title: '3 BHK Flat in Andheri West',
+      slug: '3-bhk-flat-in-andheri-west-cms97gds4',
       description: 'Spacious 3 BHK flat with modern amenities, close to metro station.',
       type: 'FLAT',
       price: 8500000,
@@ -171,6 +172,7 @@ async function main() {
       ownerId: proUser.id,
       categoryId: categories.residential.id,
       title: 'Luxury 4 BHK Villa in Whitefield',
+      slug: 'luxury-4-bhk-villa-in-whitefield-cms97gds5',
       description: 'Premium villa in gated community with clubhouse, pool, and garden.',
       type: 'VILLA',
       price: 25000000,
@@ -195,6 +197,7 @@ async function main() {
       ownerId: brokerUser.id,
       categoryId: categories.commercial.id,
       title: 'Office Space in Cyber City',
+      slug: 'office-space-in-cyber-city-cms97gds6',
       description: 'Prime commercial office space in DLF Cyber City, Gurgaon. Ready to move.',
       type: 'COMMERCIAL',
       price: 45000000,
@@ -219,6 +222,7 @@ async function main() {
       ownerId: vendorUser.id,
       categoryId: categories.land.id,
       title: 'Residential Plot in Devanahalli',
+      slug: 'residential-plot-in-devanahalli-cms97gds7',
       description: 'BBMP approved residential plot near upcoming airport expressway.',
       type: 'PLOT',
       price: 12000000,
@@ -242,6 +246,7 @@ async function main() {
       ownerId: regularUser.id,
       categoryId: categories.rental.id,
       title: '2 BHK for Rent in Koramangala',
+      slug: '2-bhk-for-rent-in-koramangala-cms97gds8',
       description: 'Well-maintained 2 BHK apartment available for rent. Walking distance to Forum Mall.',
       type: 'FLAT',
       price: 35000,
@@ -265,6 +270,7 @@ async function main() {
       ownerId: proUser.id,
       categoryId: categories.residential.id,
       title: 'Penthouse in Bandra West',
+      slug: 'penthouse-in-bandra-west-cms97gds9',
       description: 'Exclusive penthouse with sea view, private terrace, and premium finishes.',
       type: 'FLAT',
       price: 45000000,
@@ -292,6 +298,7 @@ async function main() {
     await prisma.property.create({
       data: {
         ...prop,
+        slug: (prop as any).slug,
         images: {
           create: [
             { url: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800', isPrimary: true },
@@ -299,7 +306,7 @@ async function main() {
             { url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800', isPrimary: false },
           ],
         },
-      },
+      } as any,
     });
   }
 

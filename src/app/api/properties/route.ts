@@ -145,6 +145,7 @@ export async function POST(request: NextRequest) {
   }
 
   const title = sanitizeString(body.title || '', 200)
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Math.random().toString(36).slice(2, 8)
   const description = sanitizeString(body.description || '', 5000)
   const type = body.type
   const categoryId = sanitizeString(body.categoryId || '', 50)
@@ -211,6 +212,7 @@ export async function POST(request: NextRequest) {
       ownerId: user.id,
       categoryId,
       title,
+      slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Math.random().toString(36).slice(2, 8),
       description,
       type,
       price,

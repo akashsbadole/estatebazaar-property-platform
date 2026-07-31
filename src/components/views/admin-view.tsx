@@ -32,6 +32,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import {
   Select,
   SelectContent,
@@ -1075,7 +1078,14 @@ function AuditLogTab() {
 
 // ---------- Settings ----------
 function SettingsTab() {
-  const [settings, setSettings] = useState<any[]>([])
+  const [settings, setSettings] = useState<Array<{
+    key: string
+    value: string
+    category: string
+    isSecret: boolean
+    updatedBy: string | null
+    updatedAt: string
+  }>>([])
   const [loading, setLoading] = useState(true)
   const [newKey, setNewKey] = useState('')
   const [newValue, setNewValue] = useState('')

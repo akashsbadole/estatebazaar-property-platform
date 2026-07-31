@@ -12,7 +12,7 @@ export async function GET(_request: NextRequest) {
   const token = signToken({
     sub: user.id,
     email: user.email,
-    role: user.role,
+    role: user.role as 'USER' | 'ADMIN',
     name: user.name,
   })
 

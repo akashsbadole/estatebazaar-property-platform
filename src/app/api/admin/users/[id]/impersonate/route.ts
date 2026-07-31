@@ -25,8 +25,8 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const targetUser = await db.user.findUnique({
     where: { id },
-    select: { id: true, name: true, email: true, role: true, isVerified: true, isBanned: true, avatarUrl: true, joinedDate: true, subscriptionTier: true, brokeragePaid: true },
-  })
+    select: { id: true, name: true, email: true, phone: true, role: true, isVerified: true, isBanned: true, avatarUrl: true, joinedDate: true, subscriptionTier: true, brokeragePaid: true },
+  }) as { id: string; name: string; email: string; phone: string | null; role: string; isVerified: boolean; isBanned: boolean; avatarUrl: string | null; joinedDate: Date; subscriptionTier: string; brokeragePaid: boolean } | null
   if (!targetUser) return errorResponse('User not found', 404)
   if (targetUser.id === admin.id) return errorResponse('Cannot impersonate yourself', 400)
   if (targetUser.isBanned) return errorResponse('Cannot impersonate a banned user', 400)

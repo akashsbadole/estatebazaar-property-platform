@@ -44,7 +44,7 @@ export function PropertyCard({ property, layout = 'grid' }: Props) {
     }
     setBusy(true)
     try {
-      const res = await apiPost<{ favorited: boolean }>(`/api/favorites/${property.id}`)
+      const res = await apiPost<{ favorited: boolean; message: string }>(`/api/favorites/${property.id}`)
       setFavorited(res.favorited)
       toast.success(res.message)
     } catch (err: any) {
@@ -67,7 +67,6 @@ export function PropertyCard({ property, layout = 'grid' }: Props) {
         <ResponsiveImage
           src={primaryImage.url}
           alt={property.title}
-          fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />

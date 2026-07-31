@@ -77,7 +77,7 @@ export async function PATCH(request: NextRequest) {
     },
   })
 
-  await audit('USER_UPDATE', user.id, user.id, Object.keys(data), ip)
+  await audit('USER_UPDATE', user.id, user.id, { fields: Object.keys(data) }, ip)
 
   return jsonResponse({ user: updated, message: 'Profile updated' })
 }

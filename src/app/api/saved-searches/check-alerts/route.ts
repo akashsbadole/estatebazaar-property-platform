@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  await audit('SAVED_SEARCH_ALERTS_CHECKED', user.id, null, {
+  await audit('SAVED_SEARCH_ALERTS_CHECKED', user.id, undefined, {
     alertsChecked: alerts.length,
     totalNewMatches,
     totalAlertsSent,

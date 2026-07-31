@@ -53,7 +53,7 @@ export async function GET(_request: NextRequest) {
     }),
     db.property.findMany({
       where: { ownerId: user.id },
-      select: { city: true, type: true, categoryId: true, price: true, area: true },
+      select: { id: true, city: true, type: true, categoryId: true, price: true, area: true },
       take: 10,
     }),
   ])

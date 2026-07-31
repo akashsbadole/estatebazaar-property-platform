@@ -261,9 +261,11 @@ async function main() {
     if (existing) continue
 
     const { images, isVerifiedListing, ...data } = p
+    const slug = p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Math.random().toString(36).slice(2, 8)
     await prisma.property.create({
       data: {
         ...data,
+        slug,
         contactPref: 'BOTH',
         status: 'APPROVED',
         isVerifiedListing: isVerifiedListing || false,
@@ -273,7 +275,7 @@ async function main() {
             isPrimary: i === 0,
           })),
         },
-      },
+      } as any,
     })
     created++
   }

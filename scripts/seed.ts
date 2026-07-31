@@ -271,11 +271,13 @@ async function main() {
 
   for (const p of sampleProperties) {
     const images = p.images.map((url, i) => ({ url, isPrimary: i === 0 }))
+    const slug = p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Math.random().toString(36).slice(2, 8)
     await prisma.property.create({
       data: {
         ownerId: p.ownerId,
         categoryId: p.categoryId,
         title: p.title,
+        slug,
         description: p.description,
         type: p.type,
         price: p.price,
@@ -295,7 +297,7 @@ async function main() {
         contactPref: 'BOTH',
         status: 'APPROVED',
         images: { create: images },
-      },
+      } as any,
     })
   }
   console.log(`Properties: ${sampleProperties.length} created`)

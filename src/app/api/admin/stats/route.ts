@@ -90,7 +90,7 @@ export async function GET(_request: NextRequest) {
   ])
 
   // Build 30-day histograms
-  const buildHistogram = (items: Array<{ createdAt: Date }>, key: 'createdAt' | 'joinedDate' = 'createdAt') => {
+  const buildHistogram = (items: Array<{ createdAt?: Date; joinedDate?: Date }>, key: 'createdAt' | 'joinedDate' = 'createdAt') => {
     const dayMap = new Map<string, number>()
     for (let i = 0; i < 30; i++) {
       const d = new Date(thirtyDaysAgo)
@@ -130,9 +130,6 @@ export async function GET(_request: NextRequest) {
   const recentAuditLogs = await db.auditLog.findMany({
     take: 20,
     orderBy: { createdAt: 'desc' },
-    include: {
-      actor: { select: { id: true, name: true, email: true, avatarUrl: true } },
-    },
   })
 
   const activityFeed = recentAuditLogs.map(log => {
@@ -157,7 +154,7 @@ export async function GET(_request: NextRequest) {
       action: log.action,
       description,
       icon,
-      actor: log.actor ? { id: log.actor.id, name: log.actor.name, email: log.actor.email, avatarUrl: log.actor.avatarUrl } : null,
+      actor: log.actorId ? { id: log.actorId } : null,
       target: log.target,
       meta: log.meta ? JSON.parse(log.meta) : null,
       ip: log.ip,

@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  await audit('USER_BULK_ACTION', admin.id, null, {
+  await audit('USER_BULK_ACTION', admin.id, undefined, {
     action,
     count: safeIds.length,
     success,

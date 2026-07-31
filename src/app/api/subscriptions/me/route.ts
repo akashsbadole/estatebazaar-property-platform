@@ -107,7 +107,6 @@ export async function PATCH(request: NextRequest) {
         where: { id: currentSubscription.id },
         data: {
           status: 'PENDING_CHANGE',
-          meta: JSON.stringify({ newPlanCode, newBillingCycle: billingCycle, changeAt: currentSubscription.expiresAt }),
         },
       })
       await audit('SUBSCRIPTION_CHANGE_SCHEDULED', user.id, currentSubscription.id, { newPlanCode, billingCycle }, ip)
