@@ -58,6 +58,7 @@ model Property {
   ownerId      String
   categoryId   String
   title        String
+  slug         String   @unique
   description  String
   type         String   // FLAT | HOUSE | PLOT | COMMERCIAL | VILLA | BUILDER_FLOOR
   price        Int
@@ -99,6 +100,7 @@ model Property {
   @@index([categoryId])
   @@index([status])
   @@index([city])
+  @@index([slug])
 }
 
 model PropertyImage {

@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import { useEffect, useState, useCallback } from 'react'
-import Image from 'next/image'
+import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import {
   ArrowLeft,
   MapPin,
@@ -25,13 +25,13 @@ import {
   Edit3,
   Building,
   Box,
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Skeleton } from '@/components/ui/skeleton'
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -39,24 +39,24 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { PropertyCard } from '@/components/property-card'
-import { ContactUsModal } from '@/components/contact-us-modal'
-import { EmiCalculator } from '@/components/emi-calculator'
-import { PriceTrendsChart } from '@/components/price-trends-chart'
-import { MortgageModal } from '@/components/mortgage-modal'
-import { VirtualTourViewer } from '@/components/virtual-tour-viewer'
-import { useApp } from '@/lib/store'
-import { apiGet, apiPost } from '@/lib/api-client'
+} from "@/components/ui/select";
+import { PropertyCard } from "@/components/property-card";
+import { ContactUsModal } from "@/components/contact-us-modal";
+import { EmiCalculator } from "@/components/emi-calculator";
+import { PriceTrendsChart } from "@/components/price-trends-chart";
+import { MortgageModal } from "@/components/mortgage-modal";
+import { VirtualTourViewer } from "@/components/virtual-tour-viewer";
+import { useApp } from "@/lib/store";
+import { apiGet, apiPost } from "@/lib/api-client";
 import {
   formatPrice,
   formatPriceFull,
@@ -65,120 +65,122 @@ import {
   FURNISHING_TYPES,
   REPORT_REASONS,
   type PropertyWithRelations,
-} from '@/lib/constants'
-import { toast } from 'sonner'
+} from "@/lib/constants";
+import { toast } from "sonner";
 
 interface DetailResponse {
-  property: PropertyWithRelations
-  similar: PropertyWithRelations[]
+  property: PropertyWithRelations;
+  similar: PropertyWithRelations[];
 }
 
 interface Props {
-  propertyId: string
+  propertyId: string;
 }
 
 export function DetailView({ propertyId }: Props) {
-  const { user, openAuthModal, navigate, goBack } = useApp()
-  const [data, setData] = useState<DetailResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [activeImage, setActiveImage] = useState(0)
-  const [favorited, setFavorited] = useState(false)
-  const [reportOpen, setReportOpen] = useState(false)
-  const [contactOpen, setContactOpen] = useState(false)
-  const [mortgageOpen, setMortgageOpen] = useState(false)
-  const [tourOpen, setTourOpen] = useState(false)
-  const [reportReason, setReportReason] = useState<string>('FRAUD')
-  const [reportDesc, setReportDesc] = useState('')
-  const [reporting, setReporting] = useState(false)
+  const { user, openAuthModal, navigate, goBack } = useApp();
+  const [data, setData] = useState<DetailResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeImage, setActiveImage] = useState(0);
+  const [favorited, setFavorited] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [mortgageOpen, setMortgageOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
+  const [reportReason, setReportReason] = useState<string>("FRAUD");
+  const [reportDesc, setReportDesc] = useState("");
+  const [reporting, setReporting] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const res = await apiGet<DetailResponse>(`/api/properties/${propertyId}`)
-      setData(res)
-      setFavorited(!!res.property.isFavorited)
-      setActiveImage(0)
+      const res = await apiGet<DetailResponse>(`/api/properties/${propertyId}`);
+      setData(res);
+      setFavorited(!!res.property.isFavorited);
+      setActiveImage(0);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to load property')
+      toast.error(err.message || "Failed to load property");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [propertyId])
+  }, [propertyId]);
 
   useEffect(() => {
-    load()
-  }, [load])
+    load();
+  }, [load]);
 
   const toggleFavorite = async () => {
     if (!user) {
-      openAuthModal('login')
-      return
+      openAuthModal("login");
+      return;
     }
     try {
-      const res = await apiPost<{ favorited: boolean; message: string }>(`/api/favorites/${propertyId}`)
-      setFavorited(res.favorited)
-      toast.success(res.message)
+      const res = await apiPost<{ favorited: boolean; message: string }>(
+        `/api/favorites/${propertyId}`,
+      );
+      setFavorited(res.favorited);
+      toast.success(res.message);
     } catch (err: any) {
-      toast.error(err.message || 'Failed')
+      toast.error(err.message || "Failed");
     }
-  }
+  };
 
   const startChat = async () => {
     if (!user) {
-      openAuthModal('login')
-      return
+      openAuthModal("login");
+      return;
     }
     if (data?.property.ownerId === user.id) {
-      toast.error('You cannot chat on your own listing')
-      return
+      toast.error("You cannot chat on your own listing");
+      return;
     }
     try {
-      const res = await apiPost<{ chat: { id: string } }>('/api/chats', {
+      const res = await apiPost<{ chat: { id: string } }>("/api/chats", {
         propertyId,
         message: `Hi, I'm interested in "${data?.property.title}". Is it still available?`,
-      })
-      toast.success('Chat started')
-      navigate({ name: 'chats', chatId: res.chat.id })
+      });
+      toast.success("Chat started");
+      navigate({ name: "chats", chatId: res.chat.id });
     } catch (err: any) {
-      toast.error(err.message || 'Failed to start chat')
+      toast.error(err.message || "Failed to start chat");
     }
-  }
+  };
 
   const submitReport = async () => {
     if (!user) {
-      openAuthModal('login')
-      return
+      openAuthModal("login");
+      return;
     }
-    setReporting(true)
+    setReporting(true);
     try {
       await apiPost(`/api/properties/${propertyId}/report`, {
         reason: reportReason,
         description: reportDesc || undefined,
-      })
-      toast.success('Report submitted. Our team will review it.')
-      setReportOpen(false)
-      setReportDesc('')
+      });
+      toast.success("Report submitted. Our team will review it.");
+      setReportOpen(false);
+      setReportDesc("");
     } catch (err: any) {
-      toast.error(err.message || 'Failed to submit report')
+      toast.error(err.message || "Failed to submit report");
     } finally {
-      setReporting(false)
+      setReporting(false);
     }
-  }
+  };
 
   const shareListing = async () => {
-    if (typeof window === 'undefined') return
-    const url = window.location.href
+    if (typeof window === "undefined") return;
+    const url = window.location.href;
     try {
       if (navigator.share) {
-        await navigator.share({ title: data?.property.title, url })
+        await navigator.share({ title: data?.property.title, url });
       } else {
-        await navigator.clipboard.writeText(url)
-        toast.success('Link copied to clipboard')
+        await navigator.clipboard.writeText(url);
+        toast.success("Link copied to clipboard");
       }
     } catch {
       // user cancelled
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -189,7 +191,7 @@ export function DetailView({ propertyId }: Props) {
           <Skeleton className="h-96 rounded-xl" />
         </div>
       </div>
-    )
+    );
   }
 
   if (!data) {
@@ -200,30 +202,43 @@ export function DetailView({ propertyId }: Props) {
         <p className="text-muted-foreground mb-4">
           It may have been removed or is no longer available.
         </p>
-        <Button onClick={() => navigate({ name: 'listings' })}>Browse listings</Button>
+        <Button onClick={() => navigate({ name: "listings" })}>
+          Browse listings
+        </Button>
       </div>
-    )
+    );
   }
 
-  const { property, similar } = data
+  const { property, similar } = data;
   const images = property.images.length
     ? property.images
-    : [{ id: 'placeholder', url: '/placeholder-property.svg', isPrimary: true }]
+    : [
+        {
+          id: "placeholder",
+          url: "/placeholder-property.svg",
+          isPrimary: true,
+        },
+      ];
   // Parse tourImages JSON (stored as string in DB)
   const tourImages: string[] = (() => {
-    if (!property.tourImages) return []
+    if (!property.tourImages) return [];
     try {
-      const parsed = JSON.parse(property.tourImages)
-      return Array.isArray(parsed) ? parsed.filter(s => typeof s === 'string') : []
+      const parsed = JSON.parse(property.tourImages);
+      return Array.isArray(parsed)
+        ? parsed.filter((s) => typeof s === "string")
+        : [];
     } catch {
-      return []
+      return [];
     }
-  })()
-  const typeLabel = PROPERTY_TYPES.find(t => t.value === property.type)?.label || property.type
+  })();
+  const typeLabel =
+    PROPERTY_TYPES.find((t) => t.value === property.type)?.label ||
+    property.type;
   const furnishingLabel =
-    FURNISHING_TYPES.find(f => f.value === property.furnishing)?.label || property.furnishing
+    FURNISHING_TYPES.find((f) => f.value === property.furnishing)?.label ||
+    property.furnishing;
 
-  const isOwner = user?.id === property.ownerId
+  const isOwner = user?.id === property.ownerId;
 
   return (
     <div className="container mx-auto px-4 py-6 animate-fade-in">
@@ -238,7 +253,7 @@ export function DetailView({ propertyId }: Props) {
           <Card className="overflow-hidden p-0">
             <div className="relative aspect-[16/10] bg-muted">
               <Image
-                src={images[activeImage]?.url || '/placeholder-property.svg'}
+                src={images[activeImage]?.url || "/placeholder-property.svg"}
                 alt={property.title}
                 fill
                 sizes="(max-width: 1024px) 100vw, 66vw"
@@ -252,7 +267,11 @@ export function DetailView({ propertyId }: Props) {
                     variant="secondary"
                     size="icon"
                     className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 hover:bg-white shadow-md"
-                    onClick={() => setActiveImage(i => (i - 1 + images.length) % images.length)}
+                    onClick={() =>
+                      setActiveImage(
+                        (i) => (i - 1 + images.length) % images.length,
+                      )
+                    }
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
@@ -260,7 +279,9 @@ export function DetailView({ propertyId }: Props) {
                     variant="secondary"
                     size="icon"
                     className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 hover:bg-white shadow-md"
-                    onClick={() => setActiveImage(i => (i + 1) % images.length)}
+                    onClick={() =>
+                      setActiveImage((i) => (i + 1) % images.length)
+                    }
                   >
                     <ChevronRight className="h-5 w-5" />
                   </Button>
@@ -271,7 +292,9 @@ export function DetailView({ propertyId }: Props) {
               )}
               <div className="absolute top-3 left-3 flex gap-2">
                 {property.isNegotiable && (
-                  <Badge className="bg-amber-500/90 hover:bg-amber-500 text-white border-0">Negotiable</Badge>
+                  <Badge className="bg-amber-500/90 hover:bg-amber-500 text-white border-0">
+                    Negotiable
+                  </Badge>
                 )}
                 {property.owner.isVerified && (
                   <Badge className="bg-emerald-600/90 hover:bg-emerald-600 text-white border-0 gap-1">
@@ -301,10 +324,19 @@ export function DetailView({ propertyId }: Props) {
                     key={img.id}
                     onClick={() => setActiveImage(i)}
                     className={`relative h-16 w-24 shrink-0 rounded-md overflow-hidden border-2 transition-colors ${
-                      i === activeImage ? 'border-primary' : 'border-transparent'
+                      i === activeImage
+                        ? "border-primary"
+                        : "border-transparent"
                     }`}
                   >
-                    <Image src={img.url} alt="" fill sizes="96px" className="object-cover" unoptimized />
+                    <Image
+                      src={img.url}
+                      alt=""
+                      fill
+                      sizes="96px"
+                      className="object-cover"
+                      unoptimized
+                    />
                   </button>
                 ))}
               </div>
@@ -324,14 +356,56 @@ export function DetailView({ propertyId }: Props) {
                 <h3 className="font-semibold mb-4">Property Details</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   <Detail icon={Tag} label="Type" value={typeLabel} />
-                  <Detail icon={Maximize} label="Area" value={`${property.area} sqft`} />
-                  <Detail icon={Bed} label="Bedrooms" value={property.bedrooms > 0 ? `${property.bedrooms} BHK` : 'N/A'} />
-                  <Detail icon={Bath} label="Bathrooms" value={property.bathrooms > 0 ? String(property.bathrooms) : 'N/A'} />
-                  <Detail icon={Car} label="Parking" value={property.parking > 0 ? `${property.parking} car${property.parking > 1 ? 's' : ''}` : 'None'} />
-                  <Detail icon={CheckCircle2} label="Furnishing" value={furnishingLabel} />
-                  <Detail icon={Calendar} label="Posted" value={timeAgo(property.createdAt)} />
-                  <Detail icon={Eye} label="Views" value={String(property.viewCount)} />
-                  <Detail icon={Tag} label="Category" value={property.category.name} />
+                  <Detail
+                    icon={Maximize}
+                    label="Area"
+                    value={`${property.area} sqft`}
+                  />
+                  <Detail
+                    icon={Bed}
+                    label="Bedrooms"
+                    value={
+                      property.bedrooms > 0 ? `${property.bedrooms} BHK` : "N/A"
+                    }
+                  />
+                  <Detail
+                    icon={Bath}
+                    label="Bathrooms"
+                    value={
+                      property.bathrooms > 0
+                        ? String(property.bathrooms)
+                        : "N/A"
+                    }
+                  />
+                  <Detail
+                    icon={Car}
+                    label="Parking"
+                    value={
+                      property.parking > 0
+                        ? `${property.parking} car${property.parking > 1 ? "s" : ""}`
+                        : "None"
+                    }
+                  />
+                  <Detail
+                    icon={CheckCircle2}
+                    label="Furnishing"
+                    value={furnishingLabel}
+                  />
+                  <Detail
+                    icon={Calendar}
+                    label="Posted"
+                    value={timeAgo(property.createdAt)}
+                  />
+                  <Detail
+                    icon={Eye}
+                    label="Views"
+                    value={String(property.viewCount)}
+                  />
+                  <Detail
+                    icon={Tag}
+                    label="Category"
+                    value={property.category.name}
+                  />
                 </div>
               </Card>
             </TabsContent>
@@ -351,10 +425,12 @@ export function DetailView({ propertyId }: Props) {
                 <div className="flex items-start gap-2 text-muted-foreground mb-4">
                   <MapPin className="h-5 w-5 shrink-0 mt-0.5" />
                   <div>
-                    <div className="font-medium text-foreground">{property.location}</div>
+                    <div className="font-medium text-foreground">
+                      {property.location}
+                    </div>
                     <div className="text-sm">
                       {property.city}, {property.state}
-                      {property.pincode ? ` - ${property.pincode}` : ''}
+                      {property.pincode ? ` - ${property.pincode}` : ""}
                     </div>
                   </div>
                 </div>
@@ -381,7 +457,7 @@ export function DetailView({ propertyId }: Props) {
             <div>
               <h3 className="text-xl font-bold mb-4">Similar Properties</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {similar.map(p => (
+                {similar.map((p) => (
                   <PropertyCard key={p.id} property={p as any} />
                 ))}
               </div>
@@ -391,19 +467,27 @@ export function DetailView({ propertyId }: Props) {
 
         {/* Right column: pricing + seller */}
         <div className="space-y-4">
-          <Card className="p-5 sticky top-20">
+          <Card className="p-5  top-20">
             <div className="flex items-start justify-between gap-2 mb-1">
-              <div className="text-3xl font-bold text-primary">{formatPrice(property.price)}</div>
+              <div className="text-3xl font-bold text-primary">
+                {formatPrice(property.price)}
+              </div>
               <Badge variant="outline" className="shrink-0">
-                {property.status === 'APPROVED' ? 'Available' : property.status}
+                {property.status === "APPROVED" ? "Available" : property.status}
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground mb-3">{formatPriceFull(property.price)}</p>
+            <p className="text-xs text-muted-foreground mb-3">
+              {formatPriceFull(property.price)}
+            </p>
 
-            <h1 className="text-lg font-bold leading-snug mb-2">{property.title}</h1>
+            <h1 className="text-lg font-bold leading-snug mb-2">
+              {property.title}
+            </h1>
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4">
               <MapPin className="h-4 w-4 shrink-0" />
-              <span>{property.location}, {property.city}</span>
+              <span>
+                {property.location}, {property.city}
+              </span>
             </div>
 
             <div className="flex flex-wrap gap-2 mb-4">
@@ -429,22 +513,24 @@ export function DetailView({ propertyId }: Props) {
 
             {!isOwner && (
               <div className="grid grid-cols-2 gap-2 mb-3">
-                {(property.contactPref === 'CALL' || property.contactPref === 'BOTH') && (
+                {(property.contactPref === "CALL" ||
+                  property.contactPref === "BOTH") && (
                   <Button
                     size="lg"
                     variant="outline"
                     disabled={!property.contactPhone}
                     onClick={() => {
-                      if (!user) return openAuthModal('login')
+                      if (!user) return openAuthModal("login");
                       if (property.contactPhone) {
-                        window.location.href = `tel:${property.contactPhone}`
+                        window.location.href = `tel:${property.contactPhone}`;
                       }
                     }}
                   >
                     <Phone className="h-4 w-4 mr-1" /> Call
                   </Button>
                 )}
-                {(property.contactPref === 'CHAT' || property.contactPref === 'BOTH') && (
+                {(property.contactPref === "CHAT" ||
+                  property.contactPref === "BOTH") && (
                   <Button
                     size="lg"
                     className="bg-primary hover:bg-primary/90"
@@ -463,7 +549,9 @@ export function DetailView({ propertyId }: Props) {
                 </div>
                 <Button
                   className="w-full"
-                  onClick={() => navigate({ name: 'edit', propertyId: property.id })}
+                  onClick={() =>
+                    navigate({ name: "edit", propertyId: property.id })
+                  }
                 >
                   <Edit3 className="h-4 w-4 mr-2" /> Edit Listing
                 </Button>
@@ -471,14 +559,26 @@ export function DetailView({ propertyId }: Props) {
             )}
 
             <div className="grid grid-cols-3 gap-2">
-              <Button variant="outline" size="sm" onClick={toggleFavorite} disabled={isOwner}>
-                <Heart className={`h-4 w-4 mr-1 ${favorited ? 'fill-red-500 text-red-500' : ''}`} />
-                {favorited ? 'Saved' : 'Save'}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleFavorite}
+                disabled={isOwner}
+              >
+                <Heart
+                  className={`h-4 w-4 mr-1 ${favorited ? "fill-red-500 text-red-500" : ""}`}
+                />
+                {favorited ? "Saved" : "Save"}
               </Button>
               <Button variant="outline" size="sm" onClick={shareListing}>
                 <Share2 className="h-4 w-4 mr-1" /> Share
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setReportOpen(true)} disabled={isOwner}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setReportOpen(true)}
+                disabled={isOwner}
+              >
                 <Flag className="h-4 w-4 mr-1" /> Report
               </Button>
             </div>
@@ -514,23 +614,37 @@ export function DetailView({ propertyId }: Props) {
             <h3 className="font-semibold mb-3">Posted By</h3>
             <div className="flex items-center gap-3 mb-3">
               <Avatar className="h-14 w-14">
-                <AvatarImage src={property.owner.avatarUrl || undefined} alt={property.owner.name} />
+                <AvatarImage
+                  src={property.owner.avatarUrl || undefined}
+                  alt={property.owner.name}
+                />
                 <AvatarFallback className="bg-primary/15 text-primary">
-                  {property.owner.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                  {property.owner.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-semibold truncate">{property.owner.name}</span>
+                  <span className="font-semibold truncate">
+                    {property.owner.name}
+                  </span>
                   {property.owner.isVerified && (
                     <BadgeCheck className="h-4 w-4 text-emerald-600 shrink-0" />
                   )}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  Member since {new Date(property.owner.joinedDate).toLocaleDateString('en-IN', {
-                    month: 'short',
-                    year: 'numeric',
-                  })}
+                  Member since{" "}
+                  {new Date(property.owner.joinedDate).toLocaleDateString(
+                    "en-IN",
+                    {
+                      month: "short",
+                      year: "numeric",
+                    },
+                  )}
                 </div>
               </div>
             </div>
@@ -548,17 +662,22 @@ export function DetailView({ propertyId }: Props) {
           <DialogHeader>
             <DialogTitle>Report this listing</DialogTitle>
             <DialogDescription>
-              Help us keep EstateBazaar safe. Our moderation team will review your report within 24 hours.
+              Help us keep EstateBazaar safe. Our moderation team will review
+              your report within 24 hours.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label>Reason</Label>
               <Select value={reportReason} onValueChange={setReportReason}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {REPORT_REASONS.map(r => (
-                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                  {REPORT_REASONS.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -568,16 +687,22 @@ export function DetailView({ propertyId }: Props) {
               <Textarea
                 placeholder="Provide any extra context that helps us investigate..."
                 value={reportDesc}
-                onChange={e => setReportDesc(e.target.value)}
+                onChange={(e) => setReportDesc(e.target.value)}
                 rows={4}
                 maxLength={1000}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setReportOpen(false)}>Cancel</Button>
-            <Button onClick={submitReport} disabled={reporting} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-              {reporting ? 'Submitting...' : 'Submit Report'}
+            <Button variant="outline" onClick={() => setReportOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={submitReport}
+              disabled={reporting}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              {reporting ? "Submitting..." : "Submit Report"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -608,10 +733,18 @@ export function DetailView({ propertyId }: Props) {
         title={property.title}
       />
     </div>
-  )
+  );
 }
 
-function Detail({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+function Detail({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: any;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="flex items-start gap-2">
       <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -622,5 +755,5 @@ function Detail({ icon: Icon, label, value }: { icon: any; label: string; value:
         <div className="text-sm font-medium truncate">{value}</div>
       </div>
     </div>
-  )
+  );
 }

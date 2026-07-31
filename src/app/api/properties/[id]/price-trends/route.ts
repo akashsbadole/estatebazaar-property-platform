@@ -35,7 +35,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
       area: { gt: 0 },
       id: { not: id },
     },
-    select: { price: true, area: true },
+    select: { id: true, price: true, area: true },
   })
 
   // 3. Similar properties' price changes (for market trend)
