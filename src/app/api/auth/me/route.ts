@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
-import { getCurrentUser, jsonResponse, authResponse, errorResponse, generateCsrfToken } from '@/lib/auth'
+import { getCurrentUser, jsonResponse, authResponse, errorResponse, generateCsrfToken, COOKIE_NAME } from '@/lib/auth'
 
 // GET /api/auth/me
 export async function GET(_request: NextRequest) {
@@ -8,7 +8,7 @@ export async function GET(_request: NextRequest) {
   if (!user) return errorResponse('Not authenticated', 401)
 
   const cookieStore = await cookies()
-  const sessionToken = cookieStore.get('__Host-olx_session')?.value
+  const sessionToken = cookieStore.get(COOKIE_NAME)?.value
   if (sessionToken) {
     return authResponse({ user }, generateCsrfToken(sessionToken))
   }

@@ -19,17 +19,37 @@ export async function GET(_request: NextRequest) {
     take: 50,
   })
 
-  const items = chats.map(c => ({
-    id: c.id,
-    propertyId: c.propertyId,
-    propertyTitle: c.property.title,
-    buyerName: c.buyer.name,
-    buyerEmail: c.buyer.email,
-    type: 'CHAT' as const,
-    status: c.messages[0]?.isRead ? 'READ' : 'NEW',
-    createdAt: c.createdAt.toISOString(),
-    message: c.messages[0]?.content,
-  }))
+  const contactRequests = await db.contactRequest.findMany({
+    where: { type: 'ENQUIRY', property: { ownerId: user.id } },
+    include: { property: { select: { id: true, title: true } } },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+  })
+
+  const items = [
+    ...chats.map(c => ({
+      id: c.id,
+      propertyId: c.propertyId,
+      propertyTitle: c.property.title,
+      buyerName: c.buyer.name,
+      buyerEmail: c.buyer.email,
+      type: 'CHAT' as const,
+      status: c.messages[0]?.isRead ? 'READ' : 'NEW',
+      createdAt: c.createdAt.toISOString(),
+      message: c.messages[0]?.content,
+    })),
+    ...contactRequests.map(c => ({
+      id: c.id,
+      propertyId: c.propertyId,
+      propertyTitle: c.property?.title || '',
+      buyerName: c.name,
+      buyerEmail: c.email,
+      type: 'CONTACT_REQUEST' as const,
+      status: c.status,
+      createdAt: c.createdAt.toISOString(),
+      message: c.message,
+    })),
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
   return jsonResponse({ items })
 }

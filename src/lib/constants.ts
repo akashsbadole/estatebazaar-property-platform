@@ -1,5 +1,9 @@
 // Shared constants and types for the OLX-style property platform
 
+// Session cookie name — shared with Edge middleware, so it lives in a
+// pure module (no Node imports).
+export const SESSION_COOKIE_NAME = 'realestate_session'
+
 export const PROPERTY_TYPES = [
   { value: 'FLAT', label: 'Flat / Apartment' },
   { value: 'HOUSE', label: 'Independent House' },

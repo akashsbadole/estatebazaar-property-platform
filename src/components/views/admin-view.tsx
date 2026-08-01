@@ -246,7 +246,7 @@ function DashboardTab() {
 
 // ---------- Listings moderation ----------
 function ListingsTab() {
-  const [statusFilter, setStatusFilter] = useState<string>('PENDING')
+  const [statusFilter, setStatusFilter] = useState<string>('ALL')
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
@@ -257,7 +257,7 @@ function ListingsTab() {
     setLoading(true)
     try {
       const res = await apiGet<{ items: any[]; total: number }>(
-        `/api/admin/listings?status=${statusFilter}&pageSize=24`,
+        `/api/admin/listings${statusFilter === 'ALL' ? '' : `?status=${statusFilter}`}&pageSize=24`,
       )
       setItems(res.items)
       setTotal(res.total)
@@ -341,6 +341,7 @@ function ListingsTab() {
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-40 h-9"><SelectValue /></SelectTrigger>
             <SelectContent>
+              <SelectItem value="ALL">All</SelectItem>
               {PROPERTY_STATUS.map(s => (
                 <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
               ))}
@@ -401,7 +402,7 @@ function ListingsTab() {
       ) : items.length === 0 ? (
         <Card className="p-8 text-center">
           <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-3" />
-          <p className="font-medium">No {statusFilter.toLowerCase()} listings.</p>
+          <p className="font-medium">No {statusFilter === 'ALL' ? '' : statusFilter.toLowerCase() + ' '}listings.</p>
         </Card>
       ) : (
         <div className="space-y-3">

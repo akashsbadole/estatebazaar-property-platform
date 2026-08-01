@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { rateLimitAsync } from '@/lib/rate-limit'
+// ponytail: import only the cookie name from constants — importing '@/lib/auth'
+// pulls Node-only 'crypto' + Prisma into the Edge Runtime and crashes startup.
+import { SESSION_COOKIE_NAME } from '@/lib/constants'
 
 const STATIC_PREFIXES = [
   '/_next/static',
@@ -178,7 +181,7 @@ export async function middleware(request: NextRequest) {
   const pathExempt = isCsrfExempt(pathname)
 
   if (!isInternal && !pathExempt) {
-    const cookies = request.cookies.get('__Host-olx_session')
+    const cookies = request.cookies.get(SESSION_COOKIE_NAME)
     const csrfResult = await validateCsrfToken(request, cookies?.value)
     if (!csrfResult.ok) {
       return new NextResponse(JSON.stringify({ error: csrfResult.error || 'CSRF validation failed' }), {

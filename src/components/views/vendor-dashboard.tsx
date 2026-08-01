@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
+  Mail,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -43,6 +44,14 @@ import { apiGet, apiPatch, apiDelete } from '@/lib/api-client'
 import { formatPrice, timeAgo, PROPERTY_STATUS, type PropertyWithRelations } from '@/lib/constants'
 import { toast } from 'sonner'
 import { SellerAnalytics } from '@/components/seller-analytics'
+
+// ponytail: static map — Tailwind can't compile dynamically-built class names
+const STATUS_BADGE: Record<string, string> = {
+  PENDING: 'bg-amber-500/90',
+  APPROVED: 'bg-emerald-500/90',
+  REJECTED: 'bg-red-500/90',
+  SOLD: 'bg-slate-500/90',
+}
 
 interface VendorOverview {
   totalListings: number
@@ -220,7 +229,7 @@ export function VendorDashboard() {
                               <Image src={primary.url} alt={p.title} fill sizes="300px" className="object-cover" unoptimized />
                             )}
                             <div className="absolute top-2 left-2">
-                              <Badge className={`bg-${statusInfo.color}-500/90 text-white border-0`}>{statusInfo.label}</Badge>
+                              <Badge className={`${STATUS_BADGE[p.status] || 'bg-slate-500/90'} text-white border-0`}>{statusInfo.label}</Badge>
                             </div>
                           </div>
                           <div className="p-3">
@@ -264,10 +273,10 @@ export function VendorDashboard() {
                 const statusInfo = PROPERTY_STATUS.find(s => s.value === p.status) || PROPERTY_STATUS[0]
                 return (
                   <Card key={p.id} className="overflow-hidden flex flex-col">
-                    <div className="relative aspect-[4/3] bg-muted cursor-pointer" onClick={() => navigate({ name: 'detail', propertyId: p.id })}>
+                      <div className="relative aspect-[4/3] bg-muted cursor-pointer" onClick={() => navigate({ name: 'detail', propertyId: p.id })}>
                       {primary && <Image src={primary.url} alt={p.title} fill sizes="300px" className="object-cover" unoptimized />}
                       <div className="absolute top-2 left-2">
-                        <Badge className={`bg-${statusInfo.color}-500/90 text-white border-0`}>{statusInfo.label}</Badge>
+                        <Badge className={`${STATUS_BADGE[p.status] || 'bg-slate-500/90'} text-white border-0`}>{statusInfo.label}</Badge>
                       </div>
                     </div>
                     <div className="p-4 flex-1 flex flex-col gap-2">
@@ -322,9 +331,18 @@ export function VendorDashboard() {
                       <Clock className="h-3 w-3" /> {timeAgo(enq.createdAt)}
                     </div>
                   </div>
-                  <Button size="sm" variant="outline" onClick={() => navigate({ name: 'chats' })}>
-                    <MessageCircle className="h-3.5 w-3.5 mr-1" /> Reply
-                  </Button>
+                  {enq.type === 'CHAT' ? (
+                    <Button size="sm" variant="outline" onClick={() => navigate({ name: 'chats' })}>
+                      <MessageCircle className="h-3.5 w-3.5 mr-1" /> Reply
+                    </Button>
+                  ) : (
+                    <a
+                      href={`mailto:${enq.buyerEmail}?subject=Re: ${encodeURIComponent(enq.propertyTitle)}&body=${encodeURIComponent(`Hi ${enq.buyerName},`)}`}
+                      className="inline-flex items-center h-8 px-3 text-xs rounded-md border bg-background hover:bg-accent"
+                    >
+                      <Mail className="h-3.5 w-3.5 mr-1" /> Email
+                    </a>
+                  )}
                 </Card>
               ))}
             </div>

@@ -42,6 +42,11 @@ export async function GET(_request: NextRequest) {
     image: l.images[0]?.url || null,
   }))
 
+  const formattedSearches = savedSearches.map(s => ({
+    ...s,
+    filters: JSON.parse(s.filters),
+  }))
+
   const formattedActivity = recentActivity.map(a => ({
     action: a.action,
     meta: a.meta ? JSON.parse(a.meta) : null,
@@ -52,6 +57,6 @@ export async function GET(_request: NextRequest) {
     stats: { listingCount, favCount, unreadCount, savedSearchCount },
     recentListings: formattedListings,
     recentActivity: formattedActivity,
-    savedSearches,
+    savedSearches: formattedSearches,
   })
 }
