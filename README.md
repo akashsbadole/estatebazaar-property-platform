@@ -4,16 +4,26 @@ A full-stack peer-to-peer property marketplace inspired by OLX. Built with **Nex
 
 ![EstateBazaar](https://img.shields.io/badge/Next.js-16-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue) ![Prisma](https://img.shields.io/badge/Prisma-6-indigo) ![Tailwind](https://img.shields.io/badge/Tailwind-4-cyan)
 
-----
+## Screenshots
+
+![Homepage](./screenshot/EstateBazaar-%20Homepage.png)
+![Login](./screenshot/EstateBazaar-%20login.png)
+![Contact Us](./screenshot/EstateBazaar-%20Contact%20Us.png)
+![Pricing](./screenshot/EstateBazaar-%20Pricing.png)
+
+---
+
 ## Credential
-----
-| Email | Role | Subscription | Password |
-|-------|------|--------------|----------|
-| admin@estatebazaar.com | ADMIN | FREE | password123 |
-| user@estatebazaar.com | USER | FREE | password123 |
-| pro@estatebazaar.com | USER | PRO | password123 |
-| broker@estatebazaar.com | USER | BROKER | password123 |
-| vendor@estatebazaar.com | USER | FREE | password123 |
+
+---
+
+| Email                   | Role  | Subscription | Password    |
+| ----------------------- | ----- | ------------ | ----------- |
+| admin@estatebazaar.com  | ADMIN | FREE         | password123 |
+| user@estatebazaar.com   | USER  | FREE         | password123 |
+| pro@estatebazaar.com    | USER  | PRO          | password123 |
+| broker@estatebazaar.com | USER  | BROKER       | password123 |
+| vendor@estatebazaar.com | USER  | FREE         | password123 |
 
 ---
 
@@ -80,6 +90,7 @@ A full-stack peer-to-peer property marketplace inspired by OLX. Built with **Nex
 ## 🚀 Features Implemented
 
 ### 🔐 Authentication & Security
+
 - **Email/Password signup** with bcrypt password hashing (12 rounds)
 - **OTP verification** (6-digit code, 10-min expiry, demo preview shown in toast)
 - **JWT session tokens** stored in httpOnly cookies (7-day expiry)
@@ -94,6 +105,7 @@ A full-stack peer-to-peer property marketplace inspired by OLX. Built with **Nex
 - **Verified seller badges** for verified accounts
 
 ### 🏠 Property Listing & CRUD
+
 - **Create** new listing (defaults to `PENDING` status for admin review)
 - **Read** listing with view count increment, owner info, similar properties
 - **Update** listing — significant field changes trigger re-approval
@@ -112,11 +124,13 @@ A full-stack peer-to-peer property marketplace inspired by OLX. Built with **Nex
 - **Price history tracking** — automatic on price changes
 
 ### 📂 Categories
+
 - 4 built-in categories: Residential, Commercial, Land, Rental
 - Each with icon and slug for routing
 - Property count aggregation
 
 ### 💳 Subscription System
+
 - **Plans**: FREE (₹0), PRO (₹999/mo, ₹9,999/yr), BROKER (₹2,999/mo, ₹29,999/yr)
 - Feature flags stored as JSON: maxListings, maxImagesPerListing, featuredListing, verifiedBadge, analytics, prioritySupport, teamAccess, crmIntegration
 - Billing cycle: MONTHLY | YEARLY
@@ -124,6 +138,7 @@ A full-stack peer-to-peer property marketplace inspired by OLX. Built with **Nex
 - Payment tracking with Razorpay/UPI/DEMO methods
 
 ### 🎨 UI/UX (8 distinct views)
+
 1. **Home** — Hero with search bar, category tiles, latest + trending sections, why-choose-us, CTA
 2. **Listings** — Sidebar filters (mobile sheet), grid/list toggle, sort, active filter chips, "Load more"
 3. **Detail** — Image slider with thumbnails, 3 tabs (Overview, Description, Location w/ map), seller card, similar properties, report dialog, share, save
@@ -138,6 +153,7 @@ A full-stack peer-to-peer property marketplace inspired by OLX. Built with **Nex
    - **Reports** — Status filter, mark reviewing/resolved/dismissed
 
 ### 💬 Real-time Chat (Socket.io)
+
 - Mini-service on port 3003 with JWT handshake auth
 - Broadcasts messages, typing indicators, read receipts
 - Per-user socket set (multi-tab support)
@@ -145,6 +161,7 @@ A full-stack peer-to-peer property marketplace inspired by OLX. Built with **Nex
 - Messages persisted to DB with isRead tracking
 
 ### 🛡️ Admin Tools
+
 - Approve / reject pending listings
 - Mark listings as sold
 - Ban / unban users
@@ -154,12 +171,14 @@ A full-stack peer-to-peer property marketplace inspired by OLX. Built with **Nex
 - Dashboard analytics (totals + charts)
 
 ### 📁 Image Upload
+
 - `POST /api/upload` accepts base64 data URLs (PNG/JPG/WebP/GIF)
 - Saves to `/public/uploads/<uuid>.<ext>`
 - 5 MB size limit per file
 - Returns public URL for embedding
 
 ### 💾 Additional Features
+
 - **Favorites** — Bookmark listings with unique constraint per user+property
 - **Reports** — Fraud/Duplicate/Spam/Wrong Info/Other with status workflow
 - **Contact Requests** — Enquiry (property) or Support (general) with admin notes
@@ -179,34 +198,34 @@ A full-stack peer-to-peer property marketplace inspired by OLX. Built with **Nex
 
 ## 🗄️ Database Models (18+)
 
-| Model | Purpose |
-|---|---|
-| `User` | Account (USER/ADMIN), subscription tier, brokerage, verification, ban status |
-| `Category` | Listing categories with icons and slugs |
-| `Property` | Full listing details, pricing, location, status, contact, tour images |
-| `PropertyImage` | Multiple images per property, one primary |
-| `Chat` | Conversation thread between buyer & seller |
-| `Message` | Individual chat messages with read tracking |
-| `Report` | User-submitted reports with status workflow |
-| `Favorite` | User bookmarks (unique per user+property) |
-| `Otp` | One-time passwords with expiry/consumed flag |
-| `AuditLog` | Append-only audit trail |
-| `SubscriptionPlan` | Plan definitions with feature flags (JSON) |
-| `Subscription` | User subscriptions with billing cycle & status |
-| `Payment` | Payment records (Razorpay/UPI/DEMO) |
-| `ContactRequest` | Enquiries & support tickets |
-| `RecentlyViewed` | Per-user property view history |
-| `SavedSearch` | Saved filter sets with alert settings |
-| `MortgageApplication` | Pre-approval applications |
-| `SiteSetting` | Key-value site configuration |
-| `PriceHistory` | Property price change tracking |
-| `Banner` | Homepage promotional banners |
-| `BlogPost` | Content management |
-| `ContentPage` | Static pages |
-| `Redirect` | URL redirects |
-| `NewsletterSubscriber` | Email list |
-| `Notification` | User notifications |
-| `PasswordResetToken` | Password reset flow |
+| Model                  | Purpose                                                                      |
+| ---------------------- | ---------------------------------------------------------------------------- |
+| `User`                 | Account (USER/ADMIN), subscription tier, brokerage, verification, ban status |
+| `Category`             | Listing categories with icons and slugs                                      |
+| `Property`             | Full listing details, pricing, location, status, contact, tour images        |
+| `PropertyImage`        | Multiple images per property, one primary                                    |
+| `Chat`                 | Conversation thread between buyer & seller                                   |
+| `Message`              | Individual chat messages with read tracking                                  |
+| `Report`               | User-submitted reports with status workflow                                  |
+| `Favorite`             | User bookmarks (unique per user+property)                                    |
+| `Otp`                  | One-time passwords with expiry/consumed flag                                 |
+| `AuditLog`             | Append-only audit trail                                                      |
+| `SubscriptionPlan`     | Plan definitions with feature flags (JSON)                                   |
+| `Subscription`         | User subscriptions with billing cycle & status                               |
+| `Payment`              | Payment records (Razorpay/UPI/DEMO)                                          |
+| `ContactRequest`       | Enquiries & support tickets                                                  |
+| `RecentlyViewed`       | Per-user property view history                                               |
+| `SavedSearch`          | Saved filter sets with alert settings                                        |
+| `MortgageApplication`  | Pre-approval applications                                                    |
+| `SiteSetting`          | Key-value site configuration                                                 |
+| `PriceHistory`         | Property price change tracking                                               |
+| `Banner`               | Homepage promotional banners                                                 |
+| `BlogPost`             | Content management                                                           |
+| `ContentPage`          | Static pages                                                                 |
+| `Redirect`             | URL redirects                                                                |
+| `NewsletterSubscriber` | Email list                                                                   |
+| `Notification`         | User notifications                                                           |
+| `PasswordResetToken`   | Password reset flow                                                          |
 
 ---
 
@@ -251,6 +270,7 @@ npm run dev   # runs on port 3000
 Open `http://localhost:3000`.
 
 ### Demo Credentials
+
 - **Admin**: `admin@estatebazaar.com` / `password123`
 - **Regular User**: `user@estatebazaar.com` / `password123` (FREE tier)
 - **Pro User**: `pro@estatebazaar.com` / `password123` (PRO tier)
@@ -264,57 +284,62 @@ Open `http://localhost:3000`.
 ## 🔌 API Reference
 
 ### Auth
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/auth/signup` | Create account, sends OTP |
-| POST | `/api/auth/login` | Login (or require OTP if unverified) |
-| POST | `/api/auth/verify-otp` | Verify OTP and create session |
-| POST | `/api/auth/send-otp` | Resend OTP |
-| POST | `/api/auth/logout` | Clear session |
-| GET | `/api/auth/me` | Get current user |
+
+| Method | Endpoint               | Description                          |
+| ------ | ---------------------- | ------------------------------------ |
+| POST   | `/api/auth/signup`     | Create account, sends OTP            |
+| POST   | `/api/auth/login`      | Login (or require OTP if unverified) |
+| POST   | `/api/auth/verify-otp` | Verify OTP and create session        |
+| POST   | `/api/auth/send-otp`   | Resend OTP                           |
+| POST   | `/api/auth/logout`     | Clear session                        |
+| GET    | `/api/auth/me`         | Get current user                     |
 
 ### Properties
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/properties` | List with filters/sort/pagination |
-| POST | `/api/properties` | Create listing (auth required) |
-| GET | `/api/properties/featured` | Homepage curated set |
-| GET | `/api/properties/recommended` | Personalized or trending |
-| GET | `/api/properties/my` | Owner's listings (auth required) |
-| GET | `/api/properties/[id]` | Get single + similar |
-| PUT | `/api/properties/[id]` | Update (owner only) |
-| DELETE | `/api/properties/[id]` | Delete (owner or admin) |
-| POST | `/api/properties/[id]/report` | Report listing |
+
+| Method | Endpoint                      | Description                       |
+| ------ | ----------------------------- | --------------------------------- |
+| GET    | `/api/properties`             | List with filters/sort/pagination |
+| POST   | `/api/properties`             | Create listing (auth required)    |
+| GET    | `/api/properties/featured`    | Homepage curated set              |
+| GET    | `/api/properties/recommended` | Personalized or trending          |
+| GET    | `/api/properties/my`          | Owner's listings (auth required)  |
+| GET    | `/api/properties/[id]`        | Get single + similar              |
+| PUT    | `/api/properties/[id]`        | Update (owner only)               |
+| DELETE | `/api/properties/[id]`        | Delete (owner or admin)           |
+| POST   | `/api/properties/[id]/report` | Report listing                    |
 
 ### Categories, Favorites, Chats
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/categories` | List all categories |
-| POST | `/api/categories` | Create (admin only) |
-| GET | `/api/favorites` | User's favorites |
-| POST | `/api/favorites/[propertyId]` | Toggle favorite |
-| GET | `/api/chats` | User's chats with unread counts |
-| POST | `/api/chats` | Start/resume chat |
-| GET | `/api/chats/[id]` | Chat with paginated messages |
-| POST | `/api/chats/[id]/messages` | Send message |
+
+| Method | Endpoint                      | Description                     |
+| ------ | ----------------------------- | ------------------------------- |
+| GET    | `/api/categories`             | List all categories             |
+| POST   | `/api/categories`             | Create (admin only)             |
+| GET    | `/api/favorites`              | User's favorites                |
+| POST   | `/api/favorites/[propertyId]` | Toggle favorite                 |
+| GET    | `/api/chats`                  | User's chats with unread counts |
+| POST   | `/api/chats`                  | Start/resume chat               |
+| GET    | `/api/chats/[id]`             | Chat with paginated messages    |
+| POST   | `/api/chats/[id]/messages`    | Send message                    |
 
 ### Admin
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/admin/stats` | Dashboard analytics |
-| GET | `/api/admin/listings` | All listings with filters |
-| PATCH | `/api/admin/listings/[id]` | Approve/reject/sold |
-| GET | `/api/admin/users` | All users with search |
-| PATCH | `/api/admin/users/[id]` | Ban/unban/verify/role |
-| GET | `/api/admin/reports` | All reports with status |
-| PATCH | `/api/admin/reports/[id]` | Update report status |
+
+| Method | Endpoint                   | Description               |
+| ------ | -------------------------- | ------------------------- |
+| GET    | `/api/admin/stats`         | Dashboard analytics       |
+| GET    | `/api/admin/listings`      | All listings with filters |
+| PATCH  | `/api/admin/listings/[id]` | Approve/reject/sold       |
+| GET    | `/api/admin/users`         | All users with search     |
+| PATCH  | `/api/admin/users/[id]`    | Ban/unban/verify/role     |
+| GET    | `/api/admin/reports`       | All reports with status   |
+| PATCH  | `/api/admin/reports/[id]`  | Update report status      |
 
 ### Other
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/users/me` | Get profile with counts |
-| PATCH | `/api/users/me` | Update profile |
-| POST | `/api/upload` | Upload base64 image |
+
+| Method | Endpoint        | Description             |
+| ------ | --------------- | ----------------------- |
+| GET    | `/api/users/me` | Get profile with counts |
+| PATCH  | `/api/users/me` | Update profile          |
+| POST   | `/api/upload`   | Upload base64 image     |
 
 ---
 

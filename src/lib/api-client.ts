@@ -8,11 +8,16 @@ export interface ApiError extends Error {
 export async function api<T = any>(
   path: string,
   options: RequestInit = {},
+  csrfToken?: string,
 ): Promise<T> {
+  const method = (options.method || 'GET').toUpperCase()
+  const isStateChanging = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)
+
   const res = await fetch(path, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(isStateChanging && csrfToken ? { 'x-csrf-token': csrfToken } : {}),
       ...(options.headers || {}),
     },
     credentials: 'include',
@@ -38,11 +43,11 @@ export async function api<T = any>(
 }
 
 export const apiGet = <T = any>(path: string) => api<T>(path, { method: 'GET' })
-export const apiPost = <T = any>(path: string, body?: any) =>
-  api<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined })
-export const apiPatch = <T = any>(path: string, body?: any) =>
-  api<T>(path, { method: 'PATCH', body: body ? JSON.stringify(body) : undefined })
-export const apiPut = <T = any>(path: string, body?: any) =>
-  api<T>(path, { method: 'PUT', body: body ? JSON.stringify(body) : undefined })
-export const apiDelete = <T = any>(path: string, body?: any) =>
-  api<T>(path, { method: 'DELETE', body: body ? JSON.stringify(body) : undefined })
+export const apiPost = <T = any>(path: string, body?: any, csrfToken?: string) =>
+  api<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined }, csrfToken)
+export const apiPatch = <T = any>(path: string, body?: any, csrfToken?: string) =>
+  api<T>(path, { method: 'PATCH', body: body ? JSON.stringify(body) : undefined }, csrfToken)
+export const apiPut = <T = any>(path: string, body?: any, csrfToken?: string) =>
+  api<T>(path, { method: 'PUT', body: body ? JSON.stringify(body) : undefined }, csrfToken)
+export const apiDelete = <T = any>(path: string, csrfToken?: string) =>
+  api<T>(path, { method: 'DELETE' }, csrfToken)

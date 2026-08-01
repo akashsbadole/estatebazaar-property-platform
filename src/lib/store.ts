@@ -23,7 +23,9 @@ interface AppState {
   // auth
   user: SafeUser | null
   authLoading: boolean
+  csrfToken: string | null
   setUser: (user: SafeUser | null) => void
+  setCsrfToken: (token: string | null) => void
   fetchUser: () => Promise<void>
 
   // navigation
@@ -51,19 +53,22 @@ interface AppState {
 export const useApp = create<AppState>((set, get) => ({
   user: null,
   authLoading: true,
+  csrfToken: null,
   setUser: user => set({ user }),
+  setCsrfToken: csrfToken => set({ csrfToken }),
   fetchUser: async () => {
     try {
       const res = await fetch('/api/auth/me', { credentials: 'include' })
       if (res.ok) {
         const data = await res.json()
-        set({ user: data.user, authLoading: false })
+        const csrf = res.headers.get('x-csrf-token')
+        set({ user: data.user, csrfToken: csrf, authLoading: false })
         return
       }
     } catch {
       // ignore
     }
-    set({ user: null, authLoading: false })
+    set({ user: null, csrfToken: null, authLoading: false })
   },
 
   view: { name: 'home' },

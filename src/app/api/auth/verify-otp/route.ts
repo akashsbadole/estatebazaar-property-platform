@@ -6,9 +6,11 @@ import {
   sanitizeString,
   rateLimit,
   jsonResponse,
+  authResponse,
   errorResponse,
   getClientIp,
   audit,
+  generateCsrfToken,
 } from '@/lib/auth'
 
 // POST /api/auth/verify-otp
@@ -63,16 +65,18 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  await setSessionCookie({
+  const sessionToken = await setSessionCookie({
     sub: user.id,
     email: user.email,
     role: user.role as 'USER' | 'ADMIN',
     name: user.name,
   })
 
+  const csrfToken = generateCsrfToken(sessionToken)
+
   await audit('OTP_VERIFIED', user.id, user.id, { purpose }, ip)
 
-  return jsonResponse({
+  return authResponse({
     message: 'Verified and logged in',
     user: {
       id: user.id,
@@ -86,5 +90,5 @@ export async function POST(request: NextRequest) {
       subscriptionTier: user.subscriptionTier,
       brokeragePaid: user.brokeragePaid,
     },
-  })
+  }, csrfToken)
 }

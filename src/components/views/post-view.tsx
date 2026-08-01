@@ -40,6 +40,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Checkbox } from '@/components/ui/checkbox'
 import { useApp } from '@/lib/store'
 import { apiGet, apiPost, apiPut } from '@/lib/api-client'
 import {
@@ -108,6 +109,7 @@ export function PostView({ editPropertyId }: PostViewProps) {
   const [tourImages, setTourImages] = useState<string[]>([])
   // Track original status so we can show the right messaging (e.g. re-approval needed)
   const [originalStatus, setOriginalStatus] = useState<string>('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
 
   const isProOrBroker = user?.subscriptionTier === 'PRO' || user?.subscriptionTier === 'BROKER'
 
@@ -309,6 +311,10 @@ export function PostView({ editPropertyId }: PostViewProps) {
   const submit = async () => {
     const err = validateStep(3)
     if (err) return toast.error(err)
+    if (!acceptedTerms) {
+      toast.error('Please accept the Terms & Conditions to continue')
+      return
+    }
     setLoading(true)
     const payload = {
       type,
@@ -806,6 +812,17 @@ export function PostView({ editPropertyId }: PostViewProps) {
                 profile once published.
               </div>
             )}
+
+            <div className="flex items-start gap-3 p-4 rounded-lg border">
+              <Checkbox
+                id="terms"
+                checked={acceptedTerms}
+                onCheckedChange={(v) => setAcceptedTerms(v === true)}
+              />
+              <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer select-none">
+                I agree to the EstateBazaar <button type="button" className="text-primary underline">Terms & Conditions</button> and confirm that this listing is accurate and does not violate any guidelines.
+              </label>
+            </div>
           </div>
         )}
 
@@ -819,7 +836,7 @@ export function PostView({ editPropertyId }: PostViewProps) {
               Next <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
           ) : (
-            <Button onClick={submit} disabled={loading} size="lg">
+            <Button onClick={submit} disabled={loading || !acceptedTerms} size="lg">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isEditMode ? 'Save Changes' : 'Publish Listing'}
             </Button>

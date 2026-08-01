@@ -2,9 +2,18 @@ import { createServer } from 'http'
 import { Server, Socket } from 'socket.io'
 import jwt from 'jsonwebtoken'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'olx-property-platform-secret-2026-very-long'
+const JWT_SECRET: string = process.env.JWT_SECRET!
 const API_BASE = process.env.API_BASE || 'http://localhost:3000'
-const INTERNAL_SECRET = process.env.INTERNAL_SERVICE_SECRET || 'dev-internal-secret'
+const INTERNAL_SECRET: string = process.env.INTERNAL_SERVICE_SECRET!
+
+if (!JWT_SECRET) {
+  console.error('[chat-service] FATAL: JWT_SECRET is required')
+  process.exit(1)
+}
+if (!INTERNAL_SECRET) {
+  console.error('[chat-service] FATAL: INTERNAL_SERVICE_SECRET is required')
+  process.exit(1)
+}
 
 const httpServer = createServer()
 const io = new Server(httpServer, {

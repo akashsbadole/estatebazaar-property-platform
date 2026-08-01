@@ -5,9 +5,11 @@ import {
   setSessionCookie,
   clearSessionCookie,
   jsonResponse,
+  authResponse,
   errorResponse,
   getClientIp,
   audit,
+  generateCsrfToken,
 } from '@/lib/auth'
 
 interface Params {
@@ -34,16 +36,18 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (targetUser.role === 'ADMIN') return errorResponse('Cannot impersonate an admin', 403)
 
   // Set session as the target user
-  await setSessionCookie({
+  const sessionToken = await setSessionCookie({
     sub: targetUser.id,
     email: targetUser.email,
     role: targetUser.role as 'USER' | 'ADMIN',
     name: targetUser.name,
   })
 
+  const csrfToken = generateCsrfToken(sessionToken)
+
   await audit('USER_IMPERSONATE', admin.id, targetUser.id, { targetEmail: targetUser.email }, ip)
 
-  return jsonResponse({
+  return authResponse({
     message: `You are now viewing the site as ${targetUser.name}`,
     user: {
       id: targetUser.id,
@@ -58,5 +62,5 @@ export async function POST(request: NextRequest, { params }: Params) {
       brokeragePaid: targetUser.brokeragePaid,
       impersonatedBy: admin.id,
     },
-  })
+  }, csrfToken)
 }

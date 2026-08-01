@@ -9,7 +9,12 @@ const API_BASE = process.env.API_BASE || 'http://localhost:3000'
 
 // Admin credentials for the alert-check endpoint (which is admin-only)
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@estatebazaar.com'
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'password123'
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
+
+if (!ADMIN_PASSWORD) {
+  console.error('[alert-service] FATAL: ADMIN_PASSWORD env var is required')
+  process.exit(1)
+}
 
 let sessionCookie: string | null = null
 
@@ -27,9 +32,9 @@ async function login(): Promise<boolean> {
     // Extract session cookie from Set-Cookie header
     const setCookie = res.headers.get('set-cookie')
     if (setCookie) {
-      const match = setCookie.match(/olx_session=([^;]+)/)
+      const match = setCookie.match(/__Host-olx_session=([^;]+)/)
       if (match) {
-        sessionCookie = `olx_session=${match[1]}`
+        sessionCookie = `__Host-olx_session=${match[1]}`
         console.log('[alert-service] Logged in as admin')
         return true
       }

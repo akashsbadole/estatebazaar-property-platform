@@ -8,9 +8,11 @@ import {
   sanitizeString,
   rateLimit,
   jsonResponse,
+  authResponse,
   errorResponse,
   getClientIp,
   audit,
+  generateCsrfToken,
 } from '@/lib/auth'
 import { sendEmail } from '@/lib/email'
 
@@ -82,16 +84,18 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  await setSessionCookie({
+  const sessionToken = await setSessionCookie({
     sub: user.id,
     email: user.email,
     role: user.role as 'USER' | 'ADMIN',
     name: user.name,
   })
 
+  const csrfToken = generateCsrfToken(sessionToken)
+
   await audit('USER_LOGIN', user.id, user.id, { email }, ip)
 
-  return jsonResponse({
+  return authResponse({
     message: 'Login successful',
     user: {
       id: user.id,
@@ -105,5 +109,5 @@ export async function POST(request: NextRequest) {
       subscriptionTier: user.subscriptionTier,
       brokeragePaid: user.brokeragePaid,
     },
-  })
+  }, csrfToken)
 }

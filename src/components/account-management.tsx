@@ -23,7 +23,7 @@ import {
   Lock,
   FileJson,
 } from 'lucide-react'
-import { apiDelete } from '@/lib/api-client'
+import { api } from '@/lib/api-client'
 import { toast } from 'sonner'
 import { useApp } from '@/lib/store'
 
@@ -69,7 +69,11 @@ export function AccountManagement() {
     }
     setLoading(true)
     try {
-      await apiDelete('/api/account/delete', { password })
+      await api('/api/account/delete', {
+        method: 'DELETE',
+        body: JSON.stringify({ password }),
+        headers: { 'Content-Type': 'application/json' },
+      })
       toast.success('Your account has been deleted')
       setUser(null)
       navigate({ name: 'home' })

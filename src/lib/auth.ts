@@ -1,11 +1,19 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { cookies } from 'next/headers'
+import nodeCrypto from 'crypto'
 import { db } from './db'
+import { rateLimitAsync } from './rate-limit'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'olx-property-platform-secret-2026-very-long'
+for (const key of ['DATABASE_URL', 'JWT_SECRET'] as const) {
+  if (!process.env[key]) {
+    throw new Error(`Missing required env: ${key}`)
+  }
+}
+
+const JWT_SECRET = process.env.JWT_SECRET!
 const JWT_EXPIRES_IN = '7d'
-const COOKIE_NAME = 'olx_session'
+const COOKIE_NAME = '__Host-olx_session'
 const BCRYPT_ROUNDS = 10
 
 // ---------------------------------------------------------------------------
@@ -35,7 +43,7 @@ export function signToken(payload: JWTPayload): string {
 
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as JWTPayload
+    return jwt.verify(token, JWT_SECRET) as unknown as JWTPayload
   } catch {
     return null
   }
@@ -44,16 +52,17 @@ export function verifyToken(token: string): JWTPayload | null {
 // ---------------------------------------------------------------------------
 // Cookie / Session helpers (server-side)
 // ---------------------------------------------------------------------------
-export async function setSessionCookie(payload: JWTPayload) {
+export async function setSessionCookie(payload: JWTPayload): Promise<string> {
   const token = signToken(payload)
   const cookieStore = await cookies()
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'strict',
     path: '/',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: 60 * 60 * 24 * 7,
   })
+  return token
 }
 
 export async function clearSessionCookie() {
@@ -182,8 +191,11 @@ export function isValidPassword(password: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Rate limiting (in-memory per-process, fine for single-instance sandbox)
+// Rate limiting (sync, MemoryStore — kept for backward-compat call sites)
 // ---------------------------------------------------------------------------
+// ponytail: sync MemoryStore here. Middleware uses rateLimitAsync which
+// can use RedisStore when REDIS_URL is set.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 
 export function rateLimit(
@@ -214,6 +226,16 @@ export function jsonResponse(data: unknown, status = 200) {
   })
 }
 
+export function authResponse(data: unknown, csrfToken: string, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      'x-csrf-token': csrfToken,
+    },
+  })
+}
+
 export function errorResponse(message: string, status = 400) {
   return jsonResponse({ error: message }, status)
 }
@@ -222,6 +244,16 @@ export function getClientIp(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for')
   if (forwarded) return forwarded.split(',')[0]!.trim()
   return request.headers.get('x-real-ip') || 'unknown'
+}
+
+// ---------------------------------------------------------------------------
+// CSRF token helper
+// ---------------------------------------------------------------------------
+// ponytail: HMAC-based double-submit token. Since session cookie is httpOnly,
+// JS cannot read it — token is derived server-side only, impossible to forge
+// without JWT_SECRET.
+export function generateCsrfToken(sessionToken: string): string {
+  return nodeCrypto.createHmac('sha256', JWT_SECRET).update(sessionToken).digest('hex')
 }
 
 export async function audit(action: string, actorId: string | null, target?: string, meta?: Record<string, unknown>, ip?: string) {
