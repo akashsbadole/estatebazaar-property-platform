@@ -25,6 +25,7 @@ import {
   Edit3,
   Building,
   Box,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -90,6 +91,38 @@ export function DetailView({ propertyId }: Props) {
   const [reportReason, setReportReason] = useState<string>("FRAUD");
   const [reportDesc, setReportDesc] = useState("");
   const [reporting, setReporting] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+    document.body.style.overflow = "hidden";
+  };
+
+  const closeLightbox = () => {
+    setLightboxOpen(false);
+    document.body.style.overflow = "";
+  };
+
+  const nextImage = () => {
+    setLightboxIndex((i) => (i + 1) % images.length);
+  };
+
+  const prevImage = () => {
+    setLightboxIndex((i) => (i - 1 + images.length) % images.length);
+  };
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowRight") nextImage();
+      if (e.key === "ArrowLeft") prevImage();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [lightboxOpen]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -252,15 +285,21 @@ export function DetailView({ propertyId }: Props) {
           {/* Image slider */}
           <Card className="overflow-hidden p-0">
             <div className="relative aspect-[16/10] bg-muted">
-              <Image
-                src={images[activeImage]?.url || "/placeholder-property.svg"}
-                alt={property.title}
-                fill
-                sizes="(max-width: 1024px) 100vw, 66vw"
-                className="object-cover"
-                unoptimized
-                priority
-              />
+              <button
+                onClick={() => openLightbox(activeImage)}
+                className="w-full h-full cursor-zoom-in"
+                aria-label="Open image in lightbox"
+              >
+                <Image
+                  src={images[activeImage]?.url || "/placeholder-property.svg"}
+                  alt={property.title}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 66vw"
+                  className="object-cover"
+                  unoptimized
+                  priority
+                />
+              </button>
               {images.length > 1 && (
                 <>
                   <Button
@@ -322,12 +361,16 @@ export function DetailView({ propertyId }: Props) {
                 {images.map((img, i) => (
                   <button
                     key={img.id}
-                    onClick={() => setActiveImage(i)}
+                    onClick={() => {
+                      setActiveImage(i);
+                      openLightbox(i);
+                    }}
                     className={`relative h-16 w-24 shrink-0 rounded-md overflow-hidden border-2 transition-colors ${
                       i === activeImage
                         ? "border-primary"
                         : "border-transparent"
                     }`}
+                    aria-label={`View image ${i + 1}`}
                   >
                     <Image
                       src={img.url}
@@ -732,6 +775,58 @@ export function DetailView({ propertyId }: Props) {
         images={tourImages}
         title={property.title}
       />
+
+      {/* Lightbox */}
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeLightbox();
+          }}
+        >
+          <button
+            onClick={closeLightbox}
+            className="absolute top-4 right-4 text-white/80 hover:text-white z-10"
+            aria-label="Close lightbox"
+          >
+            <X className="h-8 w-8" />
+          </button>
+
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={prevImage}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="h-10 w-10" />
+              </button>
+              <button
+                onClick={nextImage}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white"
+                aria-label="Next image"
+              >
+                <ChevronRight className="h-10 w-10" />
+              </button>
+            </>
+          )}
+
+          <div className="relative max-w-[90vw] max-h-[90vh]">
+            <Image
+              src={images[lightboxIndex]?.url || "/placeholder-property.svg"}
+              alt={property.title}
+              fill
+              sizes="90vw"
+              className="object-contain"
+              unoptimized
+            />
+          </div>
+
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm px-4 py-1.5 rounded-full">
+            {lightboxIndex + 1} / {images.length}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

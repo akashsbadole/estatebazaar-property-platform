@@ -22,7 +22,7 @@ type Mode = 'login' | 'signup'
 type Step = 'form' | 'otp'
 
 export function AuthModal() {
-  const { authModalOpen, authModalMode, closeAuthModal, setUser, fetchUser } = useApp()
+  const { authModalOpen, authModalMode, closeAuthModal, setUser, fetchUser, navigate } = useApp()
   const [mode, setMode] = useState<Mode>(authModalMode)
   const [step, setStep] = useState<Step>('form')
   const [loading, setLoading] = useState(false)
@@ -101,6 +101,7 @@ export function AuthModal() {
         } else if (res.user) {
           setUser(res.user)
           closeAuthModal()
+          navigate({ name: 'dashboard' })
           toast.success('Welcome back, ' + res.user.name + '!')
         }
       }
@@ -126,6 +127,7 @@ export function AuthModal() {
       })
       setUser(res.user)
       closeAuthModal()
+      navigate({ name: 'dashboard' })
       toast.success(res.message)
     } catch (err: any) {
       toast.error(err.message || 'OTP verification failed')
