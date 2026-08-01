@@ -1,5 +1,8 @@
 // Lightweight fetch wrapper for calling our API routes from the client.
-// Handles JSON parsing, error normalisation, and 401 redirects.
+// Handles JSON parsing, error normalisation, 401 redirects, and CSRF token
+// capture/forwarding.
+
+let storedCsrfToken: string | null = null
 
 export interface ApiError extends Error {
   status?: number
@@ -17,11 +20,22 @@ export async function api<T = any>(
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(isStateChanging && csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+      ...(isStateChanging && (csrfToken || storedCsrfToken) ? { 'x-csrf-token': csrfToken || storedCsrfToken! } : {}),
       ...(options.headers || {}),
     },
     credentials: 'include',
   })
+
+  // Capture CSRF token from response for subsequent requests
+  const responseCsrf = res.headers.get('x-csrf-token')
+  if (responseCsrf) {
+    storedCsrfToken = responseCsrf
+  }
+
+  // Clear stored token on auth failure
+  if (res.status === 401) {
+    storedCsrfToken = null
+  }
 
   let data: any = null
   const text = await res.text()
