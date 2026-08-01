@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import crypto from 'crypto'
 import { rateLimitAsync } from '@/lib/rate-limit'
 
 const STATIC_PREFIXES = [
@@ -45,11 +44,11 @@ function securityHeaders() {
     'camera=(), microphone=(), geolocation=(), payment=()',
   )
 
-  // ponytail: unsafe-inline in style-src required for Tailwind v4 runtime injection.
-  // Remove when Tailwind CSS extraction is configured.
+  // ponytail: unsafe-inline/'unsafe-eval' for scripts/styles required for Next.js/Tailwind dev runtime injection.
+  // Drop unsafe-eval in production — React doesn't use eval() there.
   headers.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
   )
 
   if (process.env.NODE_ENV === 'production') {
@@ -71,6 +70,22 @@ function isInternalRequest(request: NextRequest): boolean {
   return request.headers.get('x-internal-auth') === INTERNAL_SECRET
 }
 
+const JWT_SECRET = process.env.JWT_SECRET
+
+async function hmacSha256(key: string, data: string): Promise<string> {
+  const enc = new TextEncoder()
+  const cryptoKey = await crypto.subtle.importKey('raw', enc.encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+  const sig = await crypto.subtle.sign('HMAC', cryptoKey, enc.encode(data))
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return diff === 0
+}
+
 async function validateCsrfToken(request: NextRequest, sessionToken: string | undefined): Promise<{ ok: boolean; error?: string }> {
   const method = request.method.toUpperCase()
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) return { ok: true }
@@ -78,13 +93,13 @@ async function validateCsrfToken(request: NextRequest, sessionToken: string | un
   const csrfHeader = request.headers.get('x-csrf-token')
   const formCsrf = (await request.formData().catch(() => null))?.get('csrfToken')
 
-  const expectedToken = sessionToken
-    ? crypto.createHmac('sha256', process.env.JWT_SECRET!).update(sessionToken).digest('hex')
+  const expectedToken = sessionToken && JWT_SECRET
+    ? await hmacSha256(JWT_SECRET, sessionToken)
     : null
 
   const providedToken = csrfHeader || (typeof formCsrf === 'string' ? formCsrf : null)
 
-  if (expectedToken && providedToken && crypto.timingSafeEqual(Buffer.from(expectedToken), Buffer.from(providedToken))) {
+  if (expectedToken && providedToken && timingSafeEqual(expectedToken, providedToken)) {
     return { ok: true }
   }
 
