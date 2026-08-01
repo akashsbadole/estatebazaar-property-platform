@@ -18,6 +18,8 @@ import {
   CreditCard,
   Mail,
   Crown,
+  LayoutDashboard,
+  Store,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -38,6 +40,7 @@ import { useState } from 'react'
 import { ContactUsModal } from '@/components/contact-us-modal'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { ChatBadge } from '@/components/chat-badge'
+import { SearchSuggestions } from '@/components/search-suggestions'
 
 export function Header() {
   const { user, openAuthModal, navigate, view, setUser } = useApp()
@@ -90,19 +93,17 @@ export function Header() {
           </button>
 
           {/* Search (desktop) */}
-          <form onSubmit={onSearch} className="hidden md:flex flex-1 max-w-2xl">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by location, city, or property name..."
+          <form onSubmit={onSearch} className="hidden md:flex flex-1 max-w-2xl gap-2">
+            <div className="flex-1">
+              <SearchSuggestions
                 value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="pl-10 pr-24 h-10"
+                onChange={setSearch}
+                onSelect={(q) => navigate({ name: 'listings', query: { q } })}
               />
-              <Button type="submit" size="sm" className="absolute right-1 top-1/2 -translate-y-1/2 h-8">
-                Search
-              </Button>
             </div>
+            <Button type="submit" size="sm" className="h-10 shrink-0">
+              Search
+            </Button>
           </form>
 
           {/* Nav links (desktop) */}
@@ -190,12 +191,20 @@ export function Header() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate({ name: 'dashboard' })}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate({ name: 'profile' })}>
                     <UserIcon className="mr-2 h-4 w-4" /> My Profile
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate({ name: 'my-listings' })}>
                     <LayoutGrid className="mr-2 h-4 w-4" /> My Listings
                   </DropdownMenuItem>
+                  {user.role === 'VENDOR' && (
+                    <DropdownMenuItem onClick={() => navigate({ name: 'vendor' })}>
+                      <Store className="mr-2 h-4 w-4" /> Vendor Dashboard
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={() => navigate({ name: 'favorites' })}>
                     <Heart className="mr-2 h-4 w-4" /> Favorites
                   </DropdownMenuItem>
@@ -250,15 +259,12 @@ export function Header() {
         {mobileOpen && (
           <div className="md:hidden pb-3 pt-1 space-y-2">
             <form onSubmit={onSearch}>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search properties..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="pl-10 h-10"
-                />
-              </div>
+              <SearchSuggestions
+                value={search}
+                onChange={setSearch}
+                onSelect={(q) => { navigate({ name: 'listings', query: { q } }); setMobileOpen(false) }}
+                inputClassName="h-10"
+              />
             </form>
             <div className="flex gap-2">
               <Button

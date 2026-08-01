@@ -25,7 +25,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 export interface JWTPayload {
   sub: string
   email: string
-  role: 'USER' | 'ADMIN'
+  role: 'USER' | 'VENDOR' | 'ADMIN'
   name: string
 }
 

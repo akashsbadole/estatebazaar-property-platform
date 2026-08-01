@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
   const email = sanitizeString(body.email || '', 200).toLowerCase()
   const phone = body.phone ? sanitizeString(body.phone, 20) : null
   const password = String(body.password || '')
+  const role = body.role === 'VENDOR' ? 'VENDOR' : 'USER'
 
   if (!name) return errorResponse('Name is required', 400)
   if (!isValidEmail(email)) return errorResponse('Valid email is required', 400)
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
       email,
       phone,
       passwordHash,
+      role,
       isVerified: false,
     },
   })

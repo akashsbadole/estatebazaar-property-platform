@@ -284,7 +284,7 @@ export function ListingsView({ initialQuery }: Props) {
       <div className="space-y-2">
         <Label>City</Label>
         <Input
-          placeholder="e.g. Bangalore, Mumbai"
+          placeholder="e.g. Bangalore, Nagpur"
           value={city}
           onChange={(e) => setCity(e.target.value)}
         />
@@ -754,3 +754,4 @@ export function ListingsView({ initialQuery }: Props) {
     </div>
   );
 }
+

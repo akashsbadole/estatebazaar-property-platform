@@ -74,7 +74,7 @@ export interface SafeUser {
   name: string
   email: string
   phone?: string | null
-  role: 'USER' | 'ADMIN'
+  role: 'USER' | 'VENDOR' | 'ADMIN'
   isVerified: boolean
   avatarUrl?: string | null
   joinedDate: string

@@ -23,7 +23,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const data: any = {}
   if (typeof body.isBanned === 'boolean') data.isBanned = body.isBanned
   if (typeof body.isVerified === 'boolean') data.isVerified = body.isVerified
-  if (body.role === 'USER' || body.role === 'ADMIN') data.role = body.role
+  if (body.role === 'USER' || body.role === 'ADMIN' || body.role === 'VENDOR') data.role = body.role
 
   const user = await db.user.findUnique({ where: { id } })
   if (!user) return errorResponse('User not found', 404)

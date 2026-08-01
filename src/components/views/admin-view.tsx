@@ -24,6 +24,7 @@ import {
   Phone,
   Download,
   Settings,
+  Store,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -676,6 +677,7 @@ function UsersTab() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium truncate hover:text-primary">{u.name}</span>
                     {u.role === 'ADMIN' && <Badge className="bg-amber-500/90 hover:bg-amber-500">Admin</Badge>}
+                    {u.role === 'VENDOR' && <Badge className="bg-teal-600 hover:bg-teal-600 border-0">Vendor</Badge>}
                     {u.isBanned && <Badge variant="destructive">Banned</Badge>}
                     {u.isVerified && <Badge variant="outline" className="text-emerald-600">Verified</Badge>}
                     {u.subscriptionTier && u.subscriptionTier !== 'FREE' && (
@@ -693,6 +695,25 @@ function UsersTab() {
                   <Button size="sm" variant="outline" onClick={() => toggleVerify(u)}>
                     {u.isVerified ? 'Unverify' : 'Verify'}
                   </Button>
+                  {u.role !== 'ADMIN' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        const newRole = u.role === 'VENDOR' ? 'USER' : 'VENDOR'
+                        try {
+                          await apiPatch(`/api/admin/users/${u.id}`, { role: newRole })
+                          setItems(prev => prev.map(x => x.id === u.id ? { ...x, role: newRole } : x))
+                          toast.success(`Role updated to ${newRole}`)
+                        } catch (err: any) {
+                          toast.error(err.message || 'Failed')
+                        }
+                      }}
+                    >
+                      <Store className="h-3.5 w-3.5 mr-1" />
+                      {u.role === 'VENDOR' ? 'Demote' : 'Make Vendor'}
+                    </Button>
+                  )}
                   {u.role !== 'ADMIN' && (
                     <Button
                       size="sm"

@@ -32,6 +32,9 @@ export async function GET(request: NextRequest) {
   const ownerId = searchParams.get('ownerId') || undefined
   const sort = searchParams.get('sort') || 'latest'
   const statusParam = searchParams.get('status')
+  const lat = searchParams.get('lat') ? parseFloat(searchParams.get('lat')!) : undefined
+  const lng = searchParams.get('lng') ? parseFloat(searchParams.get('lng')!) : undefined
+  const radius = searchParams.get('radius') ? parseInt(searchParams.get('radius')!, 10) : 5000
 
   const currentUser = await getCurrentUser()
 
@@ -78,10 +81,28 @@ export async function GET(request: NextRequest) {
     if (maxArea !== undefined) where.area.lte = maxArea
   }
 
+  if (lat !== undefined && lng !== undefined) {
+    const r = Math.min(radius || 5000, 50000)
+    const latRad = (lat * Math.PI) / 180
+    const lngRad = (lng * Math.PI) / 180
+    const R = 6371
+    const maxDist = r / 1000
+    const cosLat = Math.cos(latRad)
+    const sinLat = Math.sin(latRad)
+    const havMax = (1 - Math.cos(maxDist / R)) / 2
+    const maxLat = latRad + (2 * Math.asin(Math.sqrt(havMax))) * (180 / Math.PI)
+    const maxLng = lngRad + (2 * Math.asin(Math.sqrt(havMax / (cosLat * cosLat)))) * (180 / Math.PI)
+    const minLat = latRad - (maxLat - latRad)
+    const minLng = lngRad - (maxLng - lngRad)
+    where.latitude = { gte: minLat, lte: maxLat }
+    where.longitude = { gte: minLng, lte: maxLng }
+  }
+
   let orderBy: any = { createdAt: 'desc' }
   if (sort === 'price_asc') orderBy = { price: 'asc' }
   else if (sort === 'price_desc') orderBy = { price: 'desc' }
   else if (sort === 'relevance') orderBy = { viewCount: 'desc' }
+  else if (lat !== undefined && lng !== undefined) orderBy = { createdAt: 'desc' }
 
   const [total, items] = await Promise.all([
     db.property.count({ where }),

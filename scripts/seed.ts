@@ -153,11 +153,11 @@ async function main() {
       bathrooms: 0,
       parking: 0,
       location: 'Powai, Hiranandani Gardens',
-      city: 'Mumbai',
+      city: 'Nagpur',
       state: 'Maharashtra',
-      pincode: '400076',
-      latitude: 19.1176,
-      longitude: 72.906,
+      pincode: '440034',
+      latitude: 21.1285,
+      longitude: 79.0652,
       contactPhone: '+919811100004',
       images: [
         'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200',
@@ -230,11 +230,11 @@ async function main() {
       bathrooms: 2,
       parking: 1,
       location: 'Bandra West, Carter Road',
-      city: 'Mumbai',
+      city: 'Nagpur',
       state: 'Maharashtra',
-      pincode: '400050',
-      latitude: 19.0509,
-      longitude: 72.8202,
+      pincode: '440022',
+      latitude: 21.1498,
+      longitude: 79.1001,
       contactPhone: '+919811100004',
       images: [
         'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200',
@@ -313,3 +313,6 @@ main()
   .finally(async () => {
     await prisma.$disconnect()
   })
+
+
+

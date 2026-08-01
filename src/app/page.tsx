@@ -12,6 +12,8 @@ import { ChatView } from '@/components/views/chat-view'
 import { ProfileView } from '@/components/views/profile-view'
 import { MyListingsView } from '@/components/views/my-listings-view'
 import { AdminView } from '@/components/views/admin-view'
+import { UserDashboard } from '@/components/views/user-dashboard'
+import { VendorDashboard } from '@/components/views/vendor-dashboard'
 import { PricingView } from '@/components/views/pricing-view'
 import { CompareView } from '@/components/views/compare-view'
 import { CompareTray } from '@/components/compare-tray'
@@ -28,10 +30,13 @@ export default function Home() {
   // Guard: if user navigates to a protected view without auth, redirect to home
   useEffect(() => {
     if (authLoading) return
-    if (!user && (view.name === 'post' || view.name === 'edit' || view.name === 'chats' || view.name === 'profile' || view.name === 'my-listings' || view.name === 'favorites' || view.name === 'admin')) {
+    if (!user && ['post','edit','chats','profile','dashboard','my-listings','favorites','vendor','admin'].includes(view.name)) {
       navigate({ name: 'home' })
     }
     if (user && view.name === 'admin' && user.role !== 'ADMIN') {
+      navigate({ name: 'home' })
+    }
+    if (user && view.name === 'vendor' && user.role !== 'VENDOR') {
       navigate({ name: 'home' })
     }
   }, [user, view, authLoading, navigate])
@@ -59,6 +64,8 @@ export default function Home() {
         {view.name === 'post' && <PostView />}
         {view.name === 'edit' && <PostView editPropertyId={view.propertyId} />}
         {view.name === 'profile' && <ProfileView />}
+        {view.name === 'dashboard' && <UserDashboard />}
+        {view.name === 'vendor' && <VendorDashboard />}
         {view.name === 'my-listings' && (
           <MyListingsView
             endpoint="/api/properties/my"

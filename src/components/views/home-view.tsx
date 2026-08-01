@@ -24,6 +24,7 @@ import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PropertyCard } from '@/components/property-card'
+import { SearchSuggestions } from '@/components/search-suggestions'
 import { useApp } from '@/lib/store'
 import { useI18n } from '@/lib/i18n-context'
 import { apiGet } from '@/lib/api-client'
@@ -72,6 +73,8 @@ export function HomeView() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [city, setCity] = useState('')
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'granted' | 'denied'>('idle')
+  const [nearbyCount, setNearbyCount] = useState(0)
 
   useEffect(() => {
     const promises: Promise<any>[] = [
@@ -94,6 +97,26 @@ export function HomeView() {
       })
       .finally(() => setLoading(false))
   }, [user])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !navigator.geolocation) return
+    setLocationStatus('loading')
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords
+        try {
+          const res = await apiGet<{ total: number }>(`/api/properties?lat=${latitude}&lng=${longitude}&radius=5000&pageSize=1`)
+          setNearbyCount(res.total)
+          sessionStorage.setItem('eb_user_location', JSON.stringify({ lat: latitude, lng: longitude }))
+          setLocationStatus('granted')
+        } catch {
+          setLocationStatus('denied')
+        }
+      },
+      () => setLocationStatus('denied'),
+      { timeout: 8000, maximumAge: 600000 },
+    )
+  }, [])
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -121,24 +144,13 @@ export function HomeView() {
 
             <form onSubmit={onSearch} className="bg-card border rounded-xl shadow-lg p-2 flex flex-col md:flex-row gap-2">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={t('home.searchPlaceholder')}
+                <SearchSuggestions
                   value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="pl-10 h-12 border-0 shadow-none"
+                  onChange={setSearch}
+                  onSelect={(q) => navigate({ name: 'listings', query: city ? { q, city } : { q } })}
                 />
               </div>
-              <div className="relative md:w-56">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={t('home.cityPlaceholder')}
-                  value={city}
-                  onChange={e => setCity(e.target.value)}
-                  className="pl-10 h-12 border-0 shadow-none"
-                />
-              </div>
-              <Button type="submit" size="lg" className="h-12 px-8">
+              <Button type="submit" size="lg" className="h-12 px-8 md:w-auto w-full">
                 <Search className="h-5 w-5 mr-2" /> Search
               </Button>
             </form>
@@ -159,6 +171,26 @@ export function HomeView() {
                 <div className="text-xs text-muted-foreground">{t('home.statBrokerFree')}</div>
               </div>
             </div>
+
+            {locationStatus === 'granted' && nearbyCount > 0 && (
+              <div className="mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => {
+                    const loc = sessionStorage.getItem('eb_user_location')
+                    if (loc) {
+                      const { lat, lng } = JSON.parse(loc)
+                      navigate({ name: 'listings', query: { lat, lng, radius: 5000 } })
+                    }
+                  }}
+                >
+                  <MapPin className="h-4 w-4 text-primary" />
+                  {nearbyCount} propert{nearbyCount === 1 ? 'y' : 'ies'} near you
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </section>

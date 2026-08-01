@@ -159,11 +159,11 @@ async function main() {
       bathrooms: 2,
       parking: 1,
       location: 'Andheri West, Near Versova Metro',
-      city: 'Mumbai',
+      city: 'Nagpur',
       state: 'Maharashtra',
-      pincode: '400053',
-      latitude: 19.1197,
-      longitude: 72.8464,
+      pincode: '440018',
+      latitude: 21.1458,
+      longitude: 79.0882,
       status: 'APPROVED',
       contactPhone: '+919876543211',
       contactPref: 'BOTH',
@@ -281,11 +281,11 @@ async function main() {
       bathrooms: 4,
       parking: 2,
       location: 'Bandra West, Carter Road',
-      city: 'Mumbai',
+      city: 'Nagpur',
       state: 'Maharashtra',
-      pincode: '400050',
-      latitude: 19.0596,
-      longitude: 72.8295,
+      pincode: '440022',
+      latitude: 21.1498,
+      longitude: 79.1001,
       status: 'APPROVED',
       isVerifiedListing: true,
       tourImages: JSON.stringify(['https://example.com/tour1.jpg', 'https://example.com/tour2.jpg']),
@@ -324,3 +324,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

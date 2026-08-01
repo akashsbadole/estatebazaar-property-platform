@@ -12,6 +12,8 @@ export type View =
   | { name: 'chats'; chatId?: string }
   | { name: 'favorites' }
   | { name: 'profile' }
+  | { name: 'dashboard' }
+  | { name: 'vendor' }
   | { name: 'my-listings' }
   | { name: 'admin' }
   | { name: 'pricing' }
